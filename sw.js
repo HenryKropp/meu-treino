@@ -1,6 +1,6 @@
 // Service worker — app funciona 100% offline depois da 1ª abertura.
 // Suba o número da versão sempre que mudar qualquer arquivo abaixo.
-const CACHE = 'meu-treino-v1';
+const CACHE = 'meu-treino-v2';
 const ASSETS = [
   './',
   './index.html',

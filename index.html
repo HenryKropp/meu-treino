@@ -205,6 +205,46 @@
   .day-ex:first-of-type { border-top: none; }
   .day-ex .grp { color: var(--accent); font-size: 12px; }
   .day-ex .sets { color: var(--muted); font-size: 13px; }
+  /* Hábitos */
+  .habit-row { display:flex; align-items:center; gap:10px; background:var(--surface); border:0.5px solid var(--border); border-radius:10px; padding:11px 12px; margin-bottom:8px; }
+  .habit-row.compact { background:var(--surface2); padding:9px 10px; margin:6px 0 0; }
+  .habit-check { width:26px; height:26px; border-radius:7px; border:1.5px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; font-size:15px; color:#04342c; font-weight:700; }
+  .habit-check.done { background:var(--accent); border-color:var(--accent); }
+  .habit-name { flex:1; font-size:15px; }
+  .habit-badge { font-size:11px; padding:3px 9px; border-radius:10px; white-space:nowrap; }
+  .habit-badge.do { background:rgba(93,202,165,0.15); color:var(--accent); }
+  .habit-badge.avoid { background:rgba(226,75,74,0.15); color:var(--danger); }
+  .habit-add { margin-top:16px; background:var(--surface); border:0.5px solid var(--border); border-radius:12px; padding:12px; }
+  .habit-add input { width:100%; background:var(--bg); border:0.5px solid var(--border); color:var(--text); border-radius:8px; padding:11px; font-size:14px; }
+  .habit-add .row2 { display:flex; gap:8px; margin-top:8px; }
+  .seg { display:flex; flex:1; }
+  .seg button { flex:1; background:var(--bg); border:0.5px solid var(--border); color:var(--muted); padding:9px; font-size:13px; cursor:pointer; font-weight:600; }
+  .seg button:first-child { border-radius:8px 0 0 8px; }
+  .seg button:last-child { border-radius:0 8px 8px 0; border-left:none; }
+  .seg button.on { background:var(--accent-dark); color:#fff; border-color:var(--accent-dark); }
+  .seg button.on.avoid { background:var(--danger); border-color:var(--danger); }
+  .add-habit-btn { background:var(--accent); color:#04342c; border:none; border-radius:8px; padding:0 20px; font-weight:700; font-size:18px; cursor:pointer; }
+
+  /* Calendário */
+  .cal-nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+  .cal-nav button { background:var(--surface); border:0.5px solid var(--border); color:var(--text); width:38px; height:38px; border-radius:9px; font-size:20px; cursor:pointer; }
+  .cal-nav .month { font-size:15px; font-weight:600; }
+  .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:5px; }
+  .cal-wd { text-align:center; font-size:11px; color:var(--muted); padding-bottom:2px; }
+  .cal-cell { aspect-ratio:1/1; border-radius:9px; background:var(--surface2); border:1px solid transparent; display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative; font-size:14px; }
+  .cal-cell.empty { background:transparent; cursor:default; }
+  .cal-cell.today { border-color:var(--muted); }
+  .cal-cell.selected { border-color:var(--accent); background:var(--accent-dark); color:#fff; font-weight:700; }
+  .cal-cell .wmark { position:absolute; top:5px; right:6px; width:6px; height:6px; border-radius:50%; background:var(--accent); }
+  .cal-cell.selected .wmark { background:#fff; }
+  .cal-cell .hbar { position:absolute; bottom:0; left:0; height:4px; background:var(--accent); border-radius:0 3px 3px 0; }
+  .cal-cell.selected .hbar { background:#fff; opacity:.9; }
+  .cal-legend { display:flex; gap:16px; margin-top:12px; font-size:12px; color:var(--muted); align-items:center; }
+  .cal-legend span { display:inline-flex; align-items:center; gap:6px; }
+  .lg-dot { width:7px; height:7px; border-radius:50%; background:var(--accent); display:inline-block; }
+  .lg-bar { width:14px; height:4px; border-radius:2px; background:var(--accent); display:inline-block; }
+  .detail-label { font-size:12px; color:var(--muted); margin:14px 0 2px; text-transform:uppercase; letter-spacing:.04em; }
+
   .toast {
     position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
     background: var(--accent-dark); color: #fff; padding: 10px 18px;
@@ -230,10 +270,12 @@
 
 <div class="tabs">
   <div class="tab active" id="tab-treino" onclick="setTab('treino')">Treino</div>
+  <div class="tab" id="tab-habitos" onclick="setTab('habitos')">Hábitos</div>
   <div class="tab" id="tab-agenda" onclick="setTab('agenda')">Agenda</div>
 </div>
 
 <div class="container" id="groups"></div>
+<div class="container" id="habits" style="display:none"></div>
 <div class="container" id="agenda" style="display:none"></div>
 
 <div class="fab-bar" id="fabBar">
@@ -247,16 +289,30 @@
 <script src="./chart.umd.min.js"></script>
 <script>
 const STORAGE_KEY = 'workout-data';
-let DATA = { groups: [] };
+let DATA = { groups: [], habits: [], habitChecks: {} };
 const charts = {};
+let agendaY = null, agendaM = null, selectedKey = null; // estado do calendário
+let newHabitType = 'do';
 
 function load() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) DATA = JSON.parse(raw);
   } catch (e) { /* primeira vez, sem dados */ }
+  normalize();
   render();
 }
+function normalize() {
+  if (!DATA || typeof DATA !== 'object') DATA = {};
+  if (!Array.isArray(DATA.groups)) DATA.groups = [];
+  if (!Array.isArray(DATA.habits)) DATA.habits = [];
+  if (!DATA.habitChecks || typeof DATA.habitChecks !== 'object') DATA.habitChecks = {};
+}
+function dateKey(d) {
+  const x = (d instanceof Date) ? d : new Date(d);
+  return x.getFullYear() + '-' + String(x.getMonth()+1).padStart(2,'0') + '-' + String(x.getDate()).padStart(2,'0');
+}
+function parseKey(key) { const [y,m,d] = key.split('-').map(Number); return new Date(y, m-1, d); }
 function save() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA)); }
   catch (e) { toast('Erro ao salvar'); }
@@ -300,7 +356,8 @@ function importData(input) {
       if (!parsed || !Array.isArray(parsed.groups)) throw new Error('formato');
       if (!confirm('Isto vai SUBSTITUIR todos os dados atuais pelos do backup. Continuar?')) return;
       DATA = parsed;
-      save(); render(); toast('Backup restaurado ✓');
+      normalize();
+      save(); setTab(TAB); toast('Backup restaurado ✓');
     } catch (e) {
       toast('Arquivo inválido');
     } finally {
@@ -493,45 +550,156 @@ function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&
 let TAB = 'treino';
 function setTab(t) {
   TAB = t;
-  document.getElementById('tab-treino').classList.toggle('active', t==='treino');
-  document.getElementById('tab-agenda').classList.toggle('active', t==='agenda');
+  ['treino','habitos','agenda'].forEach(x =>
+    document.getElementById('tab-'+x).classList.toggle('active', x===t));
   document.getElementById('groups').style.display = t==='treino' ? '' : 'none';
+  document.getElementById('habits').style.display = t==='habitos' ? '' : 'none';
   document.getElementById('agenda').style.display = t==='agenda' ? '' : 'none';
   document.getElementById('fabBar').style.display = t==='treino' ? '' : 'none';
-  if (t==='agenda') renderAgenda(); else render();
+  if (t==='agenda') renderAgenda();
+  else if (t==='habitos') renderHabits();
+  else render();
 }
 
-function renderAgenda() {
-  const days = {};
+// ---- Hábitos ----
+function setHabitType(t) { newHabitType = t; renderHabits(); }
+function addHabit() {
+  const inp = document.getElementById('newHabit');
+  const name = inp.value.trim();
+  if (!name) return;
+  DATA.habits.push({ id: uid(), name, type: newHabitType });
+  inp.value = '';
+  save(); renderHabits();
+}
+function delHabit(hid) {
+  if (!confirm('Excluir este hábito? O histórico de marcações dele também sai.')) return;
+  DATA.habits = DATA.habits.filter(h => h.id !== hid);
+  Object.keys(DATA.habitChecks).forEach(k => { if (DATA.habitChecks[k]) delete DATA.habitChecks[k][hid]; });
+  save(); renderHabits();
+}
+function toggleHabit(hid, key) {
+  if (!DATA.habitChecks[key]) DATA.habitChecks[key] = {};
+  if (DATA.habitChecks[key][hid]) delete DATA.habitChecks[key][hid];
+  else DATA.habitChecks[key][hid] = true;
+  if (Object.keys(DATA.habitChecks[key]).length === 0) delete DATA.habitChecks[key];
+  save();
+  if (TAB === 'agenda') renderAgenda(); else renderHabits();
+}
+function habitRow(h, key, compact) {
+  const done = !!(DATA.habitChecks[key] && DATA.habitChecks[key][h.id]);
+  return `
+    <div class="habit-row${compact?' compact':''}">
+      <div class="habit-check ${done?'done':''}" onclick="toggleHabit('${h.id}','${key}')">${done?'✓':''}</div>
+      <div class="habit-name">${esc(h.name)}</div>
+      <span class="habit-badge ${h.type}">${h.type==='do'?'Fazer':'Evitar'}</span>
+      ${compact?'':`<button class="icon-btn" onclick="delHabit('${h.id}')">🗑</button>`}
+    </div>`;
+}
+function renderHabits() {
+  const wrap = document.getElementById('habits');
+  const today = dateKey(new Date());
+  const todayFull = new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long' });
+  const checks = DATA.habitChecks[today] || {};
+  const doneCount = DATA.habits.filter(h => checks[h.id]).length;
+  const rows = DATA.habits.map(h => habitRow(h, today, false)).join('');
+  wrap.innerHTML = `
+    <h3 style="margin:4px 0 2px;font-size:16px">Hoje <span style="color:var(--muted);font-weight:400;font-size:13px">· ${cap(todayFull)}</span></h3>
+    <p style="margin:0 0 12px;color:var(--muted);font-size:13px">${DATA.habits.length ? doneCount+' de '+DATA.habits.length+' hábitos marcados' : 'Crie seus hábitos abaixo'}</p>
+    ${DATA.habits.length ? rows : '<div class="empty">Nenhum hábito ainda.<br>Adicione hábitos que você quer manter (Fazer) ou cortar (Evitar) abaixo.</div>'}
+    <div class="habit-add">
+      <input id="newHabit" placeholder="Novo hábito (ex: Beber 2L de água)" onkeydown="if(event.key==='Enter')addHabit()" />
+      <div class="row2">
+        <div class="seg">
+          <button class="${newHabitType==='do'?'on':''}" onclick="setHabitType('do')">Fazer</button>
+          <button class="${newHabitType==='avoid'?'on avoid':''}" onclick="setHabitType('avoid')">Evitar</button>
+        </div>
+        <button class="add-habit-btn" onclick="addHabit()">+</button>
+      </div>
+    </div>`;
+}
+
+// ---- Calendário ----
+function shiftMonth(n) {
+  agendaM += n;
+  if (agendaM < 0) { agendaM = 11; agendaY--; }
+  if (agendaM > 11) { agendaM = 0; agendaY++; }
+  renderAgenda();
+}
+function selectDay(key) { selectedKey = key; renderAgenda(); }
+
+function workoutsByDay() {
+  const map = {};
   DATA.groups.forEach(g => g.exercises.forEach(e => e.logs.forEach(l => {
-    const key = new Date(l.ts).toLocaleDateString('pt-BR');
-    if (!days[key]) days[key] = { ts: l.ts, items: [] };
-    days[key].items.push({ group: g.name, name: e.name, sets: l.sets, note: l.note, ts: l.ts });
+    const k = dateKey(l.ts);
+    (map[k] = map[k] || []).push({ group: g.name, name: e.name, sets: l.sets, note: l.note });
   })));
-  const keys = Object.keys(days).sort((a,b) => days[b].ts - days[a].ts);
+  return map;
+}
+function renderAgenda() {
   const wrap = document.getElementById('agenda');
-  if (keys.length === 0) {
-    wrap.innerHTML = '<div class="empty">Nenhum treino registrado ainda.<br>Registre exercícios na aba Treino e eles aparecem aqui por dia.</div>';
-    return;
+  const now = new Date();
+  if (agendaY === null) { agendaY = now.getFullYear(); agendaM = now.getMonth(); }
+  if (selectedKey === null) selectedKey = dateKey(now);
+
+  const wByDay = workoutsByDay();
+  const first = new Date(agendaY, agendaM, 1);
+  const startWd = first.getDay();
+  const daysInMonth = new Date(agendaY, agendaM + 1, 0).getDate();
+  const monthLabel = first.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  const todayKey = dateKey(now);
+  const totalHabits = DATA.habits.length;
+
+  let cells = '';
+  for (let i = 0; i < startWd; i++) cells += '<div class="cal-cell empty"></div>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const key = agendaY + '-' + String(agendaM + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+    const checks = DATA.habitChecks[key] || {};
+    const ratio = totalHabits ? DATA.habits.filter(h => checks[h.id]).length / totalHabits : 0;
+    const cls = ['cal-cell'];
+    if (key === todayKey) cls.push('today');
+    if (key === selectedKey) cls.push('selected');
+    const wmark = wByDay[key] ? '<span class="wmark"></span>' : '';
+    const bar = ratio > 0 ? `<span class="hbar" style="width:${Math.round(ratio*100)}%"></span>` : '';
+    cells += `<div class="${cls.join(' ')}" onclick="selectDay('${key}')">${d}${wmark}${bar}</div>`;
   }
-  wrap.innerHTML = keys.map(k => {
-    const day = days[k];
-    const d = new Date(day.ts);
-    const weekday = d.toLocaleDateString('pt-BR', { weekday: 'long' });
-    const full = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
-    const groups = [...new Set(day.items.map(i => i.group))].join(', ');
-    return `
-      <div class="day-card">
-        <h3>${cap(weekday)} <span class="day-sub">· ${full}</span></h3>
-        <div class="day-sub" style="margin-bottom:8px">${groups}</div>
-        ${day.items.map(i => `
-          <div class="day-ex">
-            <span class="grp">${esc(i.group)}</span> · ${esc(i.name)}<br>
-            <span class="sets">${i.sets.map(s => s.carga + (s.reps?'×'+s.reps:'') + ' kg').join('  ·  ')}</span>
-            ${i.note?`<br><span class="sets" style="font-style:italic">${esc(i.note)}</span>`:''}
-          </div>`).join('')}
-      </div>`;
-  }).join('');
+  const wd = ['D','S','T','Q','Q','S','S'].map(x => `<div class="cal-wd">${x}</div>`).join('');
+
+  wrap.innerHTML = `
+    <div class="cal-nav">
+      <button onclick="shiftMonth(-1)">‹</button>
+      <span class="month">${cap(monthLabel)}</span>
+      <button onclick="shiftMonth(1)">›</button>
+    </div>
+    <div class="cal-grid">${wd}${cells}</div>
+    <div class="cal-legend">
+      <span><span class="lg-dot"></span> treino</span>
+      ${totalHabits ? '<span><span class="lg-bar"></span> hábitos cumpridos</span>' : ''}
+    </div>
+    <div id="dayDetail"></div>`;
+  renderDayDetail(wByDay);
+}
+function renderDayDetail(wByDay) {
+  const el = document.getElementById('dayDetail');
+  const d = parseKey(selectedKey);
+  const weekday = d.toLocaleDateString('pt-BR', { weekday: 'long' });
+  const full = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+  const items = wByDay[selectedKey] || [];
+  const habitRows = DATA.habits.map(h => habitRow(h, selectedKey, true)).join('');
+  const workoutHtml = items.length
+    ? items.map(i => `
+        <div class="day-ex">
+          <span class="grp">${esc(i.group)}</span> · ${esc(i.name)}<br>
+          <span class="sets">${i.sets.map(s => s.carga + (s.reps?'×'+s.reps:'') + ' kg').join('  ·  ')}</span>
+          ${i.note?`<br><span class="sets" style="font-style:italic">${esc(i.note)}</span>`:''}
+        </div>`).join('')
+    : '<div class="day-sub" style="padding:6px 0">Sem treino registrado.</div>';
+  el.innerHTML = `
+    <div class="day-card" style="margin-top:16px">
+      <h3>${cap(weekday)} <span class="day-sub">· ${full}</span></h3>
+      ${DATA.habits.length ? `<div class="detail-label">Hábitos</div>${habitRows}` : ''}
+      <div class="detail-label">Treino</div>
+      ${workoutHtml}
+    </div>`;
 }
 function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
