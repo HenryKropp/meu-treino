@@ -214,6 +214,7 @@
   .habit-badge { font-size:11px; padding:3px 9px; border-radius:10px; white-space:nowrap; }
   .habit-badge.do { background:rgba(93,202,165,0.15); color:var(--accent); }
   .habit-badge.avoid { background:rgba(226,75,74,0.15); color:var(--danger); }
+  .streak { font-size:12px; color:#f0a35e; display:inline-flex; align-items:center; gap:2px; white-space:nowrap; font-weight:600; }
   .habit-add { margin-top:16px; background:var(--surface); border:0.5px solid var(--border); border-radius:12px; padding:12px; }
   .habit-add input { width:100%; background:var(--bg); border:0.5px solid var(--border); color:var(--text); border-radius:8px; padding:11px; font-size:14px; }
   .habit-add .row2 { display:flex; gap:8px; margin-top:8px; }
@@ -585,12 +586,25 @@ function toggleHabit(hid, key) {
   save();
   if (TAB === 'agenda') renderAgenda(); else renderHabits();
 }
+function habitStreak(hid) {
+  let streak = 0;
+  const d = new Date();
+  // se hoje ainda não marcado, começa de ontem — não quebra a sequência no meio do dia
+  if (!(DATA.habitChecks[dateKey(d)] && DATA.habitChecks[dateKey(d)][hid])) d.setDate(d.getDate() - 1);
+  while (DATA.habitChecks[dateKey(d)] && DATA.habitChecks[dateKey(d)][hid]) {
+    streak++;
+    d.setDate(d.getDate() - 1);
+  }
+  return streak;
+}
 function habitRow(h, key, compact) {
   const done = !!(DATA.habitChecks[key] && DATA.habitChecks[key][h.id]);
+  const st = compact ? 0 : habitStreak(h.id);
   return `
     <div class="habit-row${compact?' compact':''}">
       <div class="habit-check ${done?'done':''}" onclick="toggleHabit('${h.id}','${key}')">${done?'✓':''}</div>
       <div class="habit-name">${esc(h.name)}</div>
+      ${st>0?`<span class="streak">🔥 ${st}</span>`:''}
       <span class="habit-badge ${h.type}">${h.type==='do'?'Fazer':'Evitar'}</span>
       ${compact?'':`<button class="icon-btn" onclick="delHabit('${h.id}')">🗑</button>`}
     </div>`;
