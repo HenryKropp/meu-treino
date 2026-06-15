@@ -35,7 +35,7 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     background: var(--bg);
     color: var(--text);
-    padding-bottom: 90px;
+    padding-bottom: 28px;
     font-size: 16px;
   }
   header {
@@ -170,6 +170,17 @@
   .chip { background: var(--surface2); border: 0.5px solid var(--border); color: var(--text); border-radius: 20px; padding: 9px 15px; font-size: 14px; cursor: pointer; transition: background .15s, transform .1s; }
   .chip:active { transform: scale(.96); }
   .chip.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 700; }
+  .chip.add { background: var(--surface); color: var(--accent); border-style: dashed; }
+
+  .add-type { margin-top: 22px; padding-top: 18px; border-top: 0.5px solid var(--border); }
+  .new-type { margin-top: 12px; background: var(--surface); border: 0.5px solid var(--border); border-radius: 12px; padding: 12px; }
+  .new-type input { width: 100%; background: var(--bg); border: 0.5px solid var(--border); color: var(--text); border-radius: 8px; padding: 11px; font-size: 14px; }
+  .new-type .row2 { display: flex; gap: 8px; margin-top: 8px; }
+  .kind-badge { font-size: 10px; padding: 2px 7px; border-radius: 8px; background: rgba(95,208,168,.15); color: var(--accent); margin-left: 6px; vertical-align: 1px; }
+  .time-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+  .time-row input { flex: 1; background: var(--bg); border: 0.5px solid var(--border); color: var(--text); border-radius: 8px; padding: 12px; font-size: 17px; text-align: center; -moz-appearance: textfield; }
+  .time-row input::-webkit-outer-spin-button, .time-row input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .time-unit { color: var(--muted); font-size: 15px; }
 
   .series-control {
     display: flex; align-items: center; gap: 10px; margin-top: 10px;
@@ -317,22 +328,30 @@
 
 <div class="app-ver" id="appVer"></div>
 
-<div class="fab-bar" id="fabBar">
-  <input id="newGroup" placeholder="Novo grupo muscular (ex: Peito)" />
-  <button onclick="addGroup()">+</button>
-</div>
-
 <input type="file" id="importFile" accept="application/json,.json" style="display:none" onchange="importData(this)" />
 <div class="toast" id="toast"></div>
 
 <script src="./chart.umd.min.js"></script>
 <script>
 const STORAGE_KEY = 'workout-data';
-const APP_VERSION = '1.5'; // suba junto com o cache do sw.js a cada mudança
+const APP_VERSION = '1.6'; // suba junto com o cache do sw.js a cada mudança
+// tipos pré-definidos: força = séries/peso/reps · tempo = minutos
+const PRESET_TYPES = [
+  { name: 'Peito', kind: 'forca' },
+  { name: 'Ombro', kind: 'forca' },
+  { name: 'Tríceps', kind: 'forca' },
+  { name: 'Perna', kind: 'forca' },
+  { name: 'Abdômen', kind: 'forca' },
+  { name: 'Bíceps', kind: 'forca' },
+  { name: 'Costas Full', kind: 'forca' },
+  { name: 'Costas Meio', kind: 'forca' },
+  { name: 'Cardio', kind: 'tempo' }
+];
 let DATA = { groups: [], habits: [], habitChecks: {} };
 const charts = {};
 let agendaY = null, agendaM = null, selectedKey = null; // estado do calendário
 let newHabitType = 'do';
+let newTypeKind = 'tempo'; // tipo escolhido ao criar um treino novo
 
 function load() {
   try {
@@ -345,9 +364,20 @@ function load() {
 function normalize() {
   if (!DATA || typeof DATA !== 'object') DATA = {};
   if (!Array.isArray(DATA.groups)) DATA.groups = [];
+  // primeira vez: já vem com os tipos pré-definidos
+  if (DATA.groups.length === 0 && !DATA._seeded) {
+    DATA.groups = PRESET_TYPES.map(t => ({ id: uid(), name: t.name, kind: t.kind, exercises: [], logs: [] }));
+    DATA._seeded = true;
+    DATA.activeGroups = [];
+  }
+  DATA.groups.forEach(g => {
+    g.kind = (g.kind === 'tempo') ? 'tempo' : 'forca';
+    if (!Array.isArray(g.exercises)) g.exercises = [];
+    if (!Array.isArray(g.logs)) g.logs = []; // logs de tempo (minutos) ficam no próprio tipo
+  });
   if (!Array.isArray(DATA.habits)) DATA.habits = [];
   if (!DATA.habitChecks || typeof DATA.habitChecks !== 'object') DATA.habitChecks = {};
-  // músculos selecionados pro treino de hoje; quem já tinha dados começa com todos
+  // tipos selecionados pro treino de hoje; quem já tinha dados começa com todos
   if (!Array.isArray(DATA.activeGroups)) DATA.activeGroups = DATA.groups.map(g => g.id);
 }
 function dateKey(d) {
@@ -409,18 +439,25 @@ function importData(input) {
   reader.readAsText(file);
 }
 
-function addGroup() {
-  const inp = document.getElementById('newGroup');
-  const name = inp.value.trim();
-  if (!name) return;
+function addType(name, kind) {
+  name = name.trim();
+  if (!name) return false;
+  if (DATA.groups.some(g => g.name.toLowerCase() === name.toLowerCase())) { toast('Esse tipo já existe'); return false; }
   const id = uid();
-  DATA.groups.push({ id, name, exercises: [] });
-  DATA.activeGroups.push(id); // já entra selecionado pra você adicionar exercícios
-  inp.value = '';
+  DATA.groups.push({ id, name, kind, exercises: [], logs: [] });
+  DATA.activeGroups.push(id); // já entra selecionado no treino de hoje
   save(); render();
+  return true;
+}
+function addPreset(name, kind) { addType(name, kind); }
+function setTypeKind(k) { newTypeKind = k; render(); }
+function addCustomType() {
+  const inp = document.getElementById('newType');
+  if (addType(inp.value, newTypeKind)) inp.value = '';
 }
 function delGroup(gid) {
-  if (!confirm('Excluir este músculo e todos os exercícios?')) return;
+  const g = DATA.groups.find(x => x.id === gid);
+  if (!confirm('Excluir "' + (g ? g.name : 'este tipo') + '" e todo o histórico dele?')) return;
   DATA.groups = DATA.groups.filter(g => g.id !== gid);
   DATA.activeGroups = DATA.activeGroups.filter(x => x !== gid);
   save(); render();
@@ -484,17 +521,25 @@ function delLog(gid, eid, ts) {
   e.logs = e.logs.filter(l => l.ts !== ts);
   save(); render();
 }
+function saveTimeLog(gid) {
+  const g = DATA.groups.find(x => x.id === gid);
+  const m = parseInt(document.getElementById('tm_' + gid).value);
+  if (isNaN(m) || m <= 0) { toast('Informe os minutos'); return; }
+  const note = document.getElementById('tn_' + gid).value.trim();
+  g.logs.push({ ts: Date.now(), minutos: m, note });
+  save(); render(); toast('Registrado ✓');
+}
+function delTimeLog(gid, ts) {
+  const g = DATA.groups.find(x => x.id === gid);
+  g.logs = g.logs.filter(l => l.ts !== ts);
+  save(); render();
+}
 
 function render() {
-  const totalEx = DATA.groups.reduce((s,g) => s + g.exercises.length, 0);
   document.getElementById('subtitle').textContent =
-    DATA.groups.length + ' músculos · ' + totalEx + ' exercícios';
+    DATA.groups.length + ' tipos · ' + DATA.activeGroups.length + ' no treino de hoje';
 
   const wrap = document.getElementById('groups');
-  if (DATA.groups.length === 0) {
-    wrap.innerHTML = '<div class="empty">Nenhum músculo ainda.<br>Adicione um grupo muscular abaixo (ex: Peito) para começar.</div>';
-    return;
-  }
   const chips = DATA.groups.map(g => {
     const on = DATA.activeGroups.includes(g.id);
     return `<button class="chip ${on?'on':''}" onclick="toggleActive('${g.id}')">${esc(g.name)}${on?' ✓':''}</button>`;
@@ -502,35 +547,84 @@ function render() {
   const selected = DATA.groups.filter(g => DATA.activeGroups.includes(g.id));
   const cards = selected.length
     ? selected.map(g => groupCardHTML(g)).join('')
-    : '<div class="empty">Toque nos músculos acima para montar o treino de hoje.</div>';
+    : '<div class="empty">Toque nos tipos acima para montar o treino de hoje.</div>';
+
+  const have = new Set(DATA.groups.map(g => g.name.toLowerCase()));
+  const presetsLeft = PRESET_TYPES.filter(t => !have.has(t.name.toLowerCase()));
+  const presetChips = presetsLeft.length
+    ? `<div class="chips">${presetsLeft.map(t => `<button class="chip add" onclick="addPreset('${t.name}','${t.kind}')">+ ${esc(t.name)}</button>`).join('')}</div>`
+    : '';
+  const addSection = `
+    <div class="add-type">
+      <div class="pick-label">Adicionar tipo de treino</div>
+      ${presetChips}
+      <div class="new-type">
+        <input id="newType" placeholder="Criar novo (ex: Boxe, Tênis)" onkeydown="if(event.key==='Enter')addCustomType()" />
+        <div class="row2">
+          <div class="seg">
+            <button class="${newTypeKind==='forca'?'on':''}" onclick="setTypeKind('forca')">Musculação</button>
+            <button class="${newTypeKind==='tempo'?'on':''}" onclick="setTypeKind('tempo')">Tempo</button>
+          </div>
+          <button class="add-habit-btn" onclick="addCustomType()">+</button>
+        </div>
+      </div>
+    </div>`;
+
   wrap.innerHTML = `
     <div class="muscle-pick">
-      <div class="pick-label">Treino de hoje — selecione os músculos</div>
-      <div class="chips">${chips}</div>
+      <div class="pick-label">Treino de hoje — selecione os tipos</div>
+      <div class="chips">${chips || '<span class="sub" style="color:var(--muted);font-size:13px">nenhum tipo ainda</span>'}</div>
     </div>
-    ${cards}`;
+    ${cards}
+    ${addSection}`;
 
-  selected.forEach(g => g.exercises.forEach(e => drawChart(e)));
+  selected.forEach(g => g.kind !== 'tempo' && g.exercises.forEach(e => drawChart(e)));
 }
 function groupCardHTML(g) {
+  const body = g.kind === 'tempo'
+    ? timeCardHTML(g)
+    : `${g.exercises.map(e => exerciseHTML(g, e)).join('')}
+        <div class="add-ex">
+          <input placeholder="Adicionar exercício" onkeydown="if(event.key==='Enter')addExercise('${g.id}',this)" />
+          <button onclick="addExercise('${g.id}', this.previousElementSibling)">+</button>
+        </div>`;
+  const sub = g.kind === 'tempo'
+    ? `${g.logs.length} registros <span class="kind-badge">tempo</span>`
+    : `${g.exercises.length} exercícios`;
   return `
     <div class="group-card open">
       <div class="group-head">
         <div class="left">
           <div>
             <h2>${esc(g.name)}</h2>
-            <div class="count">${g.exercises.length} exercícios</div>
+            <div class="count">${sub}</div>
           </div>
         </div>
         <button class="icon-btn" onclick="delGroup('${g.id}')">🗑</button>
       </div>
-      <div class="group-body">
-        ${g.exercises.map(e => exerciseHTML(g, e)).join('')}
-        <div class="add-ex">
-          <input placeholder="Adicionar exercício" onkeydown="if(event.key==='Enter')addExercise('${g.id}',this)" />
-          <button onclick="addExercise('${g.id}', this.previousElementSibling)">+</button>
-        </div>
+      <div class="group-body">${body}</div>
+    </div>`;
+}
+function timeCardHTML(g) {
+  const last = g.logs[g.logs.length - 1];
+  const lastTxt = last ? `Última: ${last.minutos} min` : 'Sem registros ainda';
+  const pm = last ? last.minutos : '';
+  const hist = g.logs.slice().reverse().slice(0, 8).map(l => `
+    <div class="hist-item">
+      <span class="date">${fmtDate(l.ts)}</span>
+      <span class="val">${l.minutos} min${l.note?' <span class="note">— '+esc(l.note)+'</span>':''}</span>
+      <button class="hist-del" onclick="delTimeLog('${g.id}',${l.ts})">×</button>
+    </div>`).join('');
+  return `
+    <div class="exercise">
+      <div class="ex-head"><div><div class="ex-name">Duração</div><div class="ex-last">${lastTxt}</div></div></div>
+      <div class="time-row">
+        <input id="tm_${g.id}" type="number" inputmode="numeric" placeholder="minutos" value="${pm}" />
+        <span class="time-unit">min</span>
       </div>
+      <textarea id="tn_${g.id}" class="note-input" rows="1" placeholder="Anotações (opcional)"></textarea>
+      <button class="save-btn" style="width:100%;margin-top:10px" onclick="saveTimeLog('${g.id}')">Registrar tempo</button>
+      ${g.logs.length ? `<div class="history">${hist}</div>` : ''}
     </div>`;
 }
 
@@ -625,7 +719,6 @@ function setTab(t) {
   document.getElementById('groups').style.display = t==='treino' ? '' : 'none';
   document.getElementById('habits').style.display = t==='habitos' ? '' : 'none';
   document.getElementById('agenda').style.display = t==='agenda' ? '' : 'none';
-  document.getElementById('fabBar').style.display = t==='treino' ? '' : 'none';
   if (t==='agenda') renderAgenda();
   else if (t==='habitos') renderHabits();
   else render();
@@ -712,10 +805,19 @@ function selectDay(key) { selectedKey = key; renderAgenda(); }
 
 function workoutsByDay() {
   const map = {};
-  DATA.groups.forEach(g => g.exercises.forEach(e => e.logs.forEach(l => {
-    const k = dateKey(l.ts);
-    (map[k] = map[k] || []).push({ group: g.name, name: e.name, sets: l.sets, note: l.note });
-  })));
+  DATA.groups.forEach(g => {
+    if (g.kind === 'tempo') {
+      g.logs.forEach(l => {
+        const k = dateKey(l.ts);
+        (map[k] = map[k] || []).push({ group: g.name, kind: 'tempo', minutos: l.minutos, note: l.note });
+      });
+    } else {
+      g.exercises.forEach(e => e.logs.forEach(l => {
+        const k = dateKey(l.ts);
+        (map[k] = map[k] || []).push({ group: g.name, name: e.name, kind: 'forca', sets: l.sets, note: l.note });
+      }));
+    }
+  });
   return map;
 }
 function renderAgenda() {
@@ -769,12 +871,17 @@ function renderDayDetail(wByDay) {
   const items = wByDay[selectedKey] || [];
   const habitRows = DATA.habits.map(h => habitRow(h, selectedKey, true)).join('');
   const workoutHtml = items.length
-    ? items.map(i => `
-        <div class="day-ex">
-          <span class="grp">${esc(i.group)}</span> · ${esc(i.name)}<br>
-          <span class="sets">${i.sets.map(s => s.carga + (s.reps?'×'+s.reps:'') + ' kg').join('  ·  ')}</span>
-          ${i.note?`<br><span class="sets" style="font-style:italic">${esc(i.note)}</span>`:''}
-        </div>`).join('')
+    ? items.map(i => i.kind === 'tempo'
+        ? `<div class="day-ex">
+            <span class="grp">${esc(i.group)}</span><br>
+            <span class="sets">${i.minutos} min</span>
+            ${i.note?`<br><span class="sets" style="font-style:italic">${esc(i.note)}</span>`:''}
+          </div>`
+        : `<div class="day-ex">
+            <span class="grp">${esc(i.group)}</span> · ${esc(i.name)}<br>
+            <span class="sets">${i.sets.map(s => s.carga + (s.reps?'×'+s.reps:'') + ' kg').join('  ·  ')}</span>
+            ${i.note?`<br><span class="sets" style="font-style:italic">${esc(i.note)}</span>`:''}
+          </div>`).join('')
     : '<div class="day-sub" style="padding:6px 0">Sem treino registrado.</div>';
   el.innerHTML = `
     <div class="day-card" style="margin-top:16px">
@@ -785,8 +892,6 @@ function renderDayDetail(wByDay) {
     </div>`;
 }
 function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
-
-document.getElementById('newGroup').addEventListener('keydown', e => { if (e.key==='Enter') addGroup(); });
 
 // Service worker → funciona offline depois da 1ª abertura
 if ('serviceWorker' in navigator) {
