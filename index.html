@@ -282,6 +282,19 @@
   .save-btn, .add-habit-btn, .fab-bar button { transition: transform .1s, opacity .15s; }
   .fab-bar button:active, .add-habit-btn:active { transform: scale(.97); }
 
+  /* Timers (Treino) */
+  .timer-bar { display: flex; gap: 10px; padding: 12px 16px 0; max-width: 600px; margin: 0 auto; }
+  .tmr { flex: 1; background: var(--surface); border: 0.5px solid var(--border); border-radius: 12px; padding: 10px 12px; min-width: 0; }
+  .tmr-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .tmr-time { font-size: 27px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.02em; margin: 1px 0 8px; }
+  .tmr-time.done { color: var(--accent); animation: tflash .45s ease-in-out 4; }
+  @keyframes tflash { 50% { opacity: .2; } }
+  .tmr-btn { width: 100%; background: var(--accent); color: var(--accent-ink); border: none; border-radius: 8px; padding: 9px; font-weight: 700; font-size: 14px; cursor: pointer; }
+  .tmr-btn.on { background: var(--danger); color: #fff; }
+  .rest-presets { display: flex; gap: 5px; }
+  .rest-presets button { flex: 1; background: var(--bg); border: 0.5px solid var(--border); color: var(--text); border-radius: 7px; padding: 8px 0; font-size: 13px; font-weight: 600; cursor: pointer; min-width: 0; }
+  .rest-presets button:active { background: var(--border); }
+
   .toast {
     position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
     background: var(--accent-dark); color: #fff; padding: 10px 18px;
@@ -318,11 +331,31 @@
 
 <div class="tabs">
   <div class="tab active" id="tab-treino" onclick="setTab('treino')">Treino</div>
+  <div class="tab" id="tab-plano" onclick="setTab('plano')">Plano</div>
   <div class="tab" id="tab-habitos" onclick="setTab('habitos')">Hábitos</div>
   <div class="tab" id="tab-agenda" onclick="setTab('agenda')">Agenda</div>
 </div>
 
+<div class="timer-bar" id="timerBar">
+  <div class="tmr">
+    <div class="tmr-label">Cronômetro</div>
+    <div class="tmr-time" id="woDisplay">00:00</div>
+    <button class="tmr-btn" id="woBtn" onclick="toggleWorkout()">Iniciar</button>
+  </div>
+  <div class="tmr">
+    <div class="tmr-label">Descanso</div>
+    <div class="tmr-time" id="restDisplay">00:00</div>
+    <div class="rest-presets">
+      <button onclick="startRest(60)">1:00</button>
+      <button onclick="startRest(90)">1:30</button>
+      <button onclick="startRest(120)">2:00</button>
+      <button onclick="stopRest()">■</button>
+    </div>
+  </div>
+</div>
+
 <div class="container" id="groups"></div>
+<div class="container" id="plano" style="display:none"></div>
 <div class="container" id="habits" style="display:none"></div>
 <div class="container" id="agenda" style="display:none"></div>
 
@@ -334,7 +367,7 @@
 <script src="./chart.umd.min.js"></script>
 <script>
 const STORAGE_KEY = 'workout-data';
-const APP_VERSION = '1.6'; // suba junto com o cache do sw.js a cada mudança
+const APP_VERSION = '1.7'; // suba junto com o cache do sw.js a cada mudança
 // tipos pré-definidos: força = séries/peso/reps · tempo = minutos
 const PRESET_TYPES = [
   { name: 'Peito', kind: 'forca' },
@@ -374,6 +407,13 @@ function normalize() {
     g.kind = (g.kind === 'tempo') ? 'tempo' : 'forca';
     if (!Array.isArray(g.exercises)) g.exercises = [];
     if (!Array.isArray(g.logs)) g.logs = []; // logs de tempo (minutos) ficam no próprio tipo
+    g.exercises.forEach(e => {
+      if (!Array.isArray(e.logs)) e.logs = [];
+      if (typeof e.targetSets !== 'number') {
+        const l = e.logs[e.logs.length - 1];
+        e.targetSets = l ? l.sets.length : 3; // séries padrão do plano
+      }
+    });
   });
   if (!Array.isArray(DATA.habits)) DATA.habits = [];
   if (!DATA.habitChecks || typeof DATA.habitChecks !== 'object') DATA.habitChecks = {};
@@ -472,21 +512,33 @@ function addExercise(gid, inp) {
   const name = inp.value.trim();
   if (!name) return;
   const g = DATA.groups.find(x => x.id === gid);
-  g.exercises.push({ id: uid(), name, logs: [] });
+  g.exercises.push({ id: uid(), name, logs: [], targetSets: 3 });
   inp.value = '';
-  save(); render();
+  save(); renderActive();
 }
 function delExercise(gid, eid) {
   if (!confirm('Excluir este exercício?')) return;
   const g = DATA.groups.find(x => x.id === gid);
   g.exercises = g.exercises.filter(e => e.id !== eid);
-  save(); render();
+  save(); renderActive();
+}
+function setTargetSets(eid, n) {
+  const e = findEx(eid);
+  e.targetSets = Math.max(1, Math.min(12, (e.targetSets || 3) + n));
+  save(); renderPlano();
+}
+function renderActive() {
+  if (TAB === 'plano') renderPlano();
+  else if (TAB === 'habitos') renderHabits();
+  else if (TAB === 'agenda') renderAgenda();
+  else render();
 }
 function lastLog(e) { return e.logs[e.logs.length - 1]; }
 function draftCount(e) {
   if (e._draftSets) return e._draftSets;
+  if (typeof e.targetSets === 'number') return e.targetSets; // séries definidas no Plano
   const l = lastLog(e);
-  return l ? l.sets.length : 3; // lembra quantas séries da última vez
+  return l ? l.sets.length : 3;
 }
 function setSeriesCount(eid, n) {
   const e = findEx(eid);
@@ -581,13 +633,10 @@ function render() {
   selected.forEach(g => g.kind !== 'tempo' && g.exercises.forEach(e => drawChart(e)));
 }
 function groupCardHTML(g) {
-  const body = g.kind === 'tempo'
-    ? timeCardHTML(g)
-    : `${g.exercises.map(e => exerciseHTML(g, e)).join('')}
-        <div class="add-ex">
-          <input placeholder="Adicionar exercício" onkeydown="if(event.key==='Enter')addExercise('${g.id}',this)" />
-          <button onclick="addExercise('${g.id}', this.previousElementSibling)">+</button>
-        </div>`;
+  let body;
+  if (g.kind === 'tempo') body = timeCardHTML(g);
+  else if (g.exercises.length) body = g.exercises.map(e => exerciseHTML(g, e)).join('');
+  else body = '<div class="empty" style="padding:18px 8px">Nenhum exercício no plano.<br>Defina os exercícios na aba <b>Plano</b>.</div>';
   const sub = g.kind === 'tempo'
     ? `${g.logs.length} registros <span class="kind-badge">tempo</span>`
     : `${g.exercises.length} exercícios`;
@@ -714,13 +763,16 @@ function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&
 let TAB = 'treino';
 function setTab(t) {
   TAB = t;
-  ['treino','habitos','agenda'].forEach(x =>
+  ['treino','plano','habitos','agenda'].forEach(x =>
     document.getElementById('tab-'+x).classList.toggle('active', x===t));
   document.getElementById('groups').style.display = t==='treino' ? '' : 'none';
+  document.getElementById('plano').style.display = t==='plano' ? '' : 'none';
   document.getElementById('habits').style.display = t==='habitos' ? '' : 'none';
   document.getElementById('agenda').style.display = t==='agenda' ? '' : 'none';
+  document.getElementById('timerBar').style.display = t==='treino' ? 'flex' : 'none';
   if (t==='agenda') renderAgenda();
   else if (t==='habitos') renderHabits();
+  else if (t==='plano') renderPlano();
   else render();
 }
 
@@ -792,6 +844,128 @@ function renderHabits() {
         <button class="add-habit-btn" onclick="addHabit()">+</button>
       </div>
     </div>`;
+}
+
+// ---- Plano (treino padrão por músculo) ----
+function renderPlano() {
+  const wrap = document.getElementById('plano');
+  const forca = DATA.groups.filter(g => g.kind !== 'tempo');
+  const tempo = DATA.groups.filter(g => g.kind === 'tempo');
+  const cards = forca.length
+    ? forca.map(planoCardHTML).join('')
+    : '<div class="empty">Nenhum tipo de musculação ainda.<br>Crie ou selecione tipos na aba <b>Treino</b>.</div>';
+  const tempoNote = tempo.length
+    ? `<div class="pick-label" style="margin-top:18px">Por tempo (sem exercícios)</div>
+       <div class="chips">${tempo.map(g => `<span class="chip on" style="cursor:default">${esc(g.name)}</span>`).join('')}</div>`
+    : '';
+  wrap.innerHTML = `
+    <p style="margin:4px 0 14px;color:var(--muted);font-size:13px">Monte o treino padrão de cada músculo: os exercícios e quantas séries. Na aba <b>Treino</b> você só preenche os pesos.</p>
+    ${cards}${tempoNote}`;
+}
+function planoCardHTML(g) {
+  const rows = g.exercises.map(e => `
+    <div class="exercise" style="padding:11px 12px;margin-bottom:8px">
+      <div class="ex-head">
+        <div class="ex-name">${esc(e.name)}</div>
+        <button class="icon-btn" onclick="delExercise('${g.id}','${e.id}')">🗑</button>
+      </div>
+      <div class="series-control">
+        <span>Séries padrão:</span>
+        <div class="stepper">
+          <button onclick="setTargetSets('${e.id}',-1)">−</button>
+          <div class="num">${e.targetSets}</div>
+          <button onclick="setTargetSets('${e.id}',1)">+</button>
+        </div>
+      </div>
+    </div>`).join('');
+  return `
+    <div class="group-card open">
+      <div class="group-head"><div class="left"><div>
+        <h2>${esc(g.name)}</h2>
+        <div class="count">${g.exercises.length} exercícios</div>
+      </div></div></div>
+      <div class="group-body">
+        ${rows || '<div class="day-sub" style="padding:4px 0 8px">Nenhum exercício ainda.</div>'}
+        <div class="add-ex">
+          <input placeholder="Adicionar exercício" onkeydown="if(event.key==='Enter')addExercise('${g.id}',this)" />
+          <button onclick="addExercise('${g.id}', this.previousElementSibling)">+</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ---- Timers (Treino) ----
+let woStart = null, woInt = null;
+let restEnd = null, restInt = null, audioCtx = null;
+function fmtClock(s) {
+  s = Math.max(0, Math.round(s));
+  return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
+}
+function toggleWorkout() {
+  const btn = document.getElementById('woBtn');
+  if (woStart === null) {
+    woStart = Date.now();
+    btn.textContent = 'Finalizar'; btn.classList.add('on');
+    woInt = setInterval(tickWorkout, 1000); tickWorkout();
+  } else {
+    const mins = Math.round((Date.now() - woStart) / 60000);
+    clearInterval(woInt); woInt = null; woStart = null;
+    btn.textContent = 'Iniciar'; btn.classList.remove('on');
+    document.getElementById('woDisplay').textContent = '00:00';
+    toast('Treino: ' + mins + ' min 💪');
+  }
+}
+function tickWorkout() {
+  if (woStart === null) return;
+  document.getElementById('woDisplay').textContent = fmtClock((Date.now() - woStart) / 1000);
+}
+function startRest(sec) {
+  ensureAudio();
+  restEnd = Date.now() + sec * 1000;
+  if (restInt) clearInterval(restInt);
+  document.getElementById('restDisplay').classList.remove('done');
+  restInt = setInterval(tickRest, 200); tickRest();
+}
+function stopRest() {
+  if (restInt) clearInterval(restInt);
+  restInt = null; restEnd = null;
+  const d = document.getElementById('restDisplay');
+  d.textContent = '00:00'; d.classList.remove('done');
+}
+function tickRest() {
+  if (restEnd === null) return;
+  const remain = (restEnd - Date.now()) / 1000;
+  const d = document.getElementById('restDisplay');
+  if (remain <= 0) {
+    clearInterval(restInt); restInt = null; restEnd = null;
+    d.textContent = '00:00'; d.classList.add('done');
+    beep();
+    setTimeout(() => d.classList.remove('done'), 2200);
+  } else {
+    d.textContent = fmtClock(remain);
+  }
+}
+function ensureAudio() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  } catch (e) {}
+}
+function beep() {
+  try {
+    ensureAudio();
+    for (let i = 0; i < 2; i++) {
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.connect(g); g.connect(audioCtx.destination);
+      o.type = 'sine'; o.frequency.value = 880;
+      const t = audioCtx.currentTime + i * 0.3;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.35, t + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.25);
+      o.start(t); o.stop(t + 0.26);
+    }
+  } catch (e) {}
+  if (navigator.vibrate) navigator.vibrate([180, 70, 180]);
 }
 
 // ---- Calendário ----
