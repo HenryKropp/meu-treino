@@ -1,10 +1,11 @@
 // Service worker — app funciona 100% offline depois da 1ª abertura.
 // Suba o número da versão sempre que mudar qualquer arquivo abaixo.
-const CACHE = 'meu-treino-v8';
+const CACHE = 'meu-treino-v9';
 const ASSETS = [
   './',
   './index.html',
   './chart.umd.min.js',
+  './supabase.min.js',
   './manifest.webmanifest',
   './icon-192.png',
   './icon-512.png',
