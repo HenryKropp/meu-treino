@@ -236,10 +236,18 @@
   .day-ex .grp { color: var(--accent); font-size: 12px; }
   .day-ex .sets { color: var(--muted); font-size: 13px; }
   /* Hábitos */
-  .habit-row { display:flex; align-items:center; gap:10px; background:var(--surface); border:0.5px solid var(--border); border-radius:10px; padding:11px 12px; margin-bottom:8px; }
+  .habit-row { display:flex; flex-wrap:wrap; align-items:center; gap:10px; background:var(--surface); border:0.5px solid var(--border); border-radius:10px; padding:11px 12px; margin-bottom:8px; }
   .habit-row.compact { background:var(--surface2); padding:9px 10px; margin:6px 0 0; }
+  .habit-row.off { opacity:0.6; }
   .habit-check { width:26px; height:26px; border-radius:7px; border:1.5px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; font-size:15px; color:#04342c; font-weight:700; }
   .habit-check.done { background:var(--accent); border-color:var(--accent); }
+  .habit-check.locked { cursor:default; opacity:0.4; }
+  .day-chips { display:flex; gap:5px; flex-basis:100%; margin-top:2px; }
+  .day-chips.add-chips { margin-top:10px; }
+  .day-chip { flex:1; text-align:center; padding:6px 0; border-radius:7px; border:0.5px solid var(--border); background:var(--bg); color:var(--muted); font-size:11px; cursor:pointer; font-weight:600; user-select:none; }
+  .day-chip.on { background:var(--accent); color:#04342c; border-color:var(--accent); }
+  .day-presets { display:flex; gap:6px; margin-top:8px; }
+  .day-presets button { flex:1; background:var(--bg); border:0.5px solid var(--border); color:var(--muted); border-radius:8px; padding:7px; font-size:12px; cursor:pointer; font-weight:600; }
   .habit-name { flex:1; font-size:15px; }
   .habit-badge { font-size:11px; padding:3px 9px; border-radius:10px; white-space:nowrap; }
   .habit-badge.do { background:rgba(93,202,165,0.15); color:var(--accent); }
@@ -367,7 +375,7 @@
 <script src="./chart.umd.min.js"></script>
 <script>
 const STORAGE_KEY = 'workout-data';
-const APP_VERSION = '1.7'; // suba junto com o cache do sw.js a cada mudança
+const APP_VERSION = '1.8'; // suba junto com o cache do sw.js a cada mudança
 // tipos pré-definidos: força = séries/peso/reps · tempo = minutos
 const PRESET_TYPES = [
   { name: 'Peito', kind: 'forca' },
@@ -384,6 +392,8 @@ let DATA = { groups: [], habits: [], habitChecks: {} };
 const charts = {};
 let agendaY = null, agendaM = null, selectedKey = null; // estado do calendário
 let newHabitType = 'do';
+let newHabitDays = [0,1,2,3,4,5,6]; // dias selecionados ao criar um hábito novo
+const DAY_NAMES = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 let newTypeKind = 'tempo'; // tipo escolhido ao criar um treino novo
 
 function load() {
@@ -416,6 +426,10 @@ function normalize() {
     });
   });
   if (!Array.isArray(DATA.habits)) DATA.habits = [];
+  DATA.habits.forEach(h => {
+    // dias da semana em que o hábito vale (0=Dom … 6=Sáb); vazio/ausente = todo dia
+    if (!Array.isArray(h.days) || h.days.length === 0) h.days = [0,1,2,3,4,5,6];
+  });
   if (!DATA.habitChecks || typeof DATA.habitChecks !== 'object') DATA.habitChecks = {};
   // tipos selecionados pro treino de hoje; quem já tinha dados começa com todos
   if (!Array.isArray(DATA.activeGroups)) DATA.activeGroups = DATA.groups.map(g => g.id);
@@ -778,11 +792,47 @@ function setTab(t) {
 
 // ---- Hábitos ----
 function setHabitType(t) { newHabitType = t; renderHabits(); }
+function habitDays(h) { return (Array.isArray(h.days) && h.days.length) ? h.days : [0,1,2,3,4,5,6]; }
+function scheduledOn(h, wd) { return habitDays(h).includes(wd); }
+function daysLabel(h) {
+  const d = habitDays(h).slice().sort((a,b)=>a-b);
+  if (d.length === 7) return 'Todo dia';
+  if (d.length === 5 && [1,2,3,4,5].every(x=>d.includes(x))) return 'Dias úteis';
+  if (d.length === 2 && d.includes(0) && d.includes(6)) return 'Fim de semana';
+  return d.map(x => DAY_NAMES[x]).join(', ');
+}
+function dayChipsHTML(selected, onclickExpr, extraCls) {
+  return `<div class="day-chips ${extraCls||''}">` +
+    DAY_NAMES.map((n, i) =>
+      `<div class="day-chip ${selected.includes(i)?'on':''}" onclick="${onclickExpr.replace('%d', i)}">${n}</div>`
+    ).join('') + `</div>`;
+}
+function setNewHabitDays(preset) {
+  if (preset === 'all') newHabitDays = [0,1,2,3,4,5,6];
+  else if (preset === 'week') newHabitDays = [1,2,3,4,5];
+  else if (preset === 'weekend') newHabitDays = [0,6];
+  renderHabits();
+}
+function toggleNewHabitDay(d) {
+  if (newHabitDays.includes(d)) newHabitDays = newHabitDays.filter(x => x !== d);
+  else newHabitDays = newHabitDays.concat(d).sort((a,b)=>a-b);
+  renderHabits();
+}
+function toggleHabitDay(hid, d) {
+  const h = DATA.habits.find(x => x.id === hid);
+  if (!h) return;
+  let days = habitDays(h).slice();
+  if (days.includes(d)) { if (days.length === 1) return; days = days.filter(x => x !== d); }
+  else days = days.concat(d).sort((a,b)=>a-b);
+  h.days = days;
+  save(); renderHabits();
+}
 function addHabit() {
   const inp = document.getElementById('newHabit');
   const name = inp.value.trim();
   if (!name) return;
-  DATA.habits.push({ id: uid(), name, type: newHabitType });
+  const days = newHabitDays.length ? newHabitDays.slice() : [0,1,2,3,4,5,6];
+  DATA.habits.push({ id: uid(), name, type: newHabitType, days });
   inp.value = '';
   save(); renderHabits();
 }
@@ -801,39 +851,64 @@ function toggleHabit(hid, key) {
   if (TAB === 'agenda') renderAgenda(); else renderHabits();
 }
 function habitStreak(hid) {
+  const h = DATA.habits.find(x => x.id === hid);
+  if (!h) return 0;
   let streak = 0;
   const d = new Date();
-  // se hoje ainda não marcado, começa de ontem — não quebra a sequência no meio do dia
-  if (!(DATA.habitChecks[dateKey(d)] && DATA.habitChecks[dateKey(d)][hid])) d.setDate(d.getDate() - 1);
-  while (DATA.habitChecks[dateKey(d)] && DATA.habitChecks[dateKey(d)][hid]) {
-    streak++;
+  // se hoje é dia agendado e ainda não marcado, começa de ontem — não quebra no meio do dia
+  if (scheduledOn(h, d.getDay()) && !(DATA.habitChecks[dateKey(d)] && DATA.habitChecks[dateKey(d)][hid])) d.setDate(d.getDate() - 1);
+  for (let i = 0; i < 400; i++) {
+    if (scheduledOn(h, d.getDay())) {
+      const k = dateKey(d);
+      if (DATA.habitChecks[k] && DATA.habitChecks[k][hid]) streak++;
+      else break;
+    }
     d.setDate(d.getDate() - 1);
   }
   return streak;
 }
-function habitRow(h, key, compact) {
+function habitRow(h, key, compact, scheduled) {
+  if (scheduled === undefined) scheduled = true;
   const done = !!(DATA.habitChecks[key] && DATA.habitChecks[key][h.id]);
   const st = compact ? 0 : habitStreak(h.id);
+  const check = scheduled
+    ? `<div class="habit-check ${done?'done':''}" onclick="toggleHabit('${h.id}','${key}')">${done?'✓':''}</div>`
+    : `<div class="habit-check locked" title="Não agendado para este dia"></div>`;
   return `
-    <div class="habit-row${compact?' compact':''}">
-      <div class="habit-check ${done?'done':''}" onclick="toggleHabit('${h.id}','${key}')">${done?'✓':''}</div>
+    <div class="habit-row${compact?' compact':''}${scheduled?'':' off'}">
+      ${check}
       <div class="habit-name">${esc(h.name)}</div>
       ${st>0?`<span class="streak">🔥 ${st}</span>`:''}
       <span class="habit-badge ${h.type}">${h.type==='do'?'Fazer':'Evitar'}</span>
-      ${compact?'':`<button class="icon-btn" onclick="delHabit('${h.id}')">🗑</button>`}
+      ${compact?`<span class="habit-badge" style="background:var(--surface);color:var(--muted)">${daysLabel(h)}</span>`:`<button class="icon-btn" onclick="delHabit('${h.id}')">🗑</button>`}
+      ${compact?'':dayChipsHTML(habitDays(h), `toggleHabitDay('${h.id}',%d)`)}
     </div>`;
 }
 function renderHabits() {
   const wrap = document.getElementById('habits');
-  const today = dateKey(new Date());
-  const todayFull = new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long' });
+  const now = new Date();
+  const today = dateKey(now);
+  const wd = now.getDay();
+  const todayFull = now.toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long' });
   const checks = DATA.habitChecks[today] || {};
-  const doneCount = DATA.habits.filter(h => checks[h.id]).length;
-  const rows = DATA.habits.map(h => habitRow(h, today, false)).join('');
+  const todayHabits = DATA.habits.filter(h => scheduledOn(h, wd));
+  const otherHabits = DATA.habits.filter(h => !scheduledOn(h, wd));
+  const doneCount = todayHabits.filter(h => checks[h.id]).length;
+  const rows = todayHabits.map(h => habitRow(h, today, false, true)).join('');
+  const otherRows = otherHabits.map(h => habitRow(h, today, false, false)).join('');
+  let body;
+  if (!DATA.habits.length) {
+    body = '<div class="empty">Nenhum hábito ainda.<br>Adicione hábitos que você quer manter (Fazer) ou cortar (Evitar) abaixo.</div>';
+  } else if (!todayHabits.length) {
+    body = '<div class="empty">Nenhum hábito agendado para hoje. 😌</div>';
+  } else {
+    body = rows;
+  }
   wrap.innerHTML = `
     <h3 style="margin:4px 0 2px;font-size:16px">Hoje <span style="color:var(--muted);font-weight:400;font-size:13px">· ${cap(todayFull)}</span></h3>
-    <p style="margin:0 0 12px;color:var(--muted);font-size:13px">${DATA.habits.length ? doneCount+' de '+DATA.habits.length+' hábitos marcados' : 'Crie seus hábitos abaixo'}</p>
-    ${DATA.habits.length ? rows : '<div class="empty">Nenhum hábito ainda.<br>Adicione hábitos que você quer manter (Fazer) ou cortar (Evitar) abaixo.</div>'}
+    <p style="margin:0 0 12px;color:var(--muted);font-size:13px">${todayHabits.length ? doneCount+' de '+todayHabits.length+' hábitos de hoje' : (DATA.habits.length ? 'Dia de folga 🎉' : 'Crie seus hábitos abaixo')}</p>
+    ${body}
+    ${otherRows ? `<div class="detail-label" style="margin-top:18px">Outros dias</div>${otherRows}` : ''}
     <div class="habit-add">
       <input id="newHabit" placeholder="Novo hábito (ex: Beber 2L de água)" onkeydown="if(event.key==='Enter')addHabit()" />
       <div class="row2">
@@ -843,6 +918,12 @@ function renderHabits() {
         </div>
         <button class="add-habit-btn" onclick="addHabit()">+</button>
       </div>
+      <div class="day-presets">
+        <button onclick="setNewHabitDays('all')">Todo dia</button>
+        <button onclick="setNewHabitDays('week')">Dias úteis</button>
+        <button onclick="setNewHabitDays('weekend')">Fim de semana</button>
+      </div>
+      ${dayChipsHTML(newHabitDays, 'toggleNewHabitDay(%d)', 'add-chips')}
     </div>`;
 }
 
@@ -1013,7 +1094,9 @@ function renderAgenda() {
   for (let d = 1; d <= daysInMonth; d++) {
     const key = agendaY + '-' + String(agendaM + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
     const checks = DATA.habitChecks[key] || {};
-    const ratio = totalHabits ? DATA.habits.filter(h => checks[h.id]).length / totalHabits : 0;
+    const cellWd = new Date(agendaY, agendaM, d).getDay();
+    const dayHabits = DATA.habits.filter(h => scheduledOn(h, cellWd));
+    const ratio = dayHabits.length ? dayHabits.filter(h => checks[h.id]).length / dayHabits.length : 0;
     const cls = ['cal-cell'];
     if (key === todayKey) cls.push('today');
     if (key === selectedKey) cls.push('selected');
@@ -1043,7 +1126,9 @@ function renderDayDetail(wByDay) {
   const weekday = d.toLocaleDateString('pt-BR', { weekday: 'long' });
   const full = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
   const items = wByDay[selectedKey] || [];
-  const habitRows = DATA.habits.map(h => habitRow(h, selectedKey, true)).join('');
+  const selWd = d.getDay();
+  const dayHabits = DATA.habits.filter(h => scheduledOn(h, selWd));
+  const habitRows = dayHabits.map(h => habitRow(h, selectedKey, true)).join('');
   const workoutHtml = items.length
     ? items.map(i => i.kind === 'tempo'
         ? `<div class="day-ex">
@@ -1060,7 +1145,7 @@ function renderDayDetail(wByDay) {
   el.innerHTML = `
     <div class="day-card" style="margin-top:16px">
       <h3>${cap(weekday)} <span class="day-sub">· ${full}</span></h3>
-      ${DATA.habits.length ? `<div class="detail-label">Hábitos</div>${habitRows}` : ''}
+      ${dayHabits.length ? `<div class="detail-label">Hábitos</div>${habitRows}` : ''}
       <div class="detail-label">Treino</div>
       ${workoutHtml}
     </div>`;
