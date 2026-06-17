@@ -210,19 +210,70 @@
     font-weight: 600; color: var(--text);
   }
   .set-line {
-    display: grid; grid-template-columns: 24px 1fr 1fr; gap: 8px;
+    display: grid; grid-template-columns: 26px 1fr 1fr; gap: 8px;
     align-items: center; margin-top: 8px;
   }
+  .set-line.bw { grid-template-columns: 26px 1fr; }
   .set-line .set-idx { font-size: 13px; color: var(--muted); text-align: center; }
   .set-line input {
     width: 100%; background: var(--bg); border: 0.5px solid var(--border);
-    color: var(--text); border-radius: 8px; padding: 9px 8px; font-size: 15px;
+    color: var(--text); border-radius: 8px; padding: 10px 8px; font-size: 15px;
     text-align: center; -moz-appearance: textfield;
   }
   .set-line input::-webkit-outer-spin-button,
   .set-line input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-  .set-head { display: grid; grid-template-columns: 24px 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .set-line.done input { background: rgba(93,202,165,.12); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+  .set-check {
+    height: 40px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--bg);
+    color: var(--muted); display: flex; align-items: center; justify-content: center;
+    font-size: 19px; font-weight: 700; cursor: pointer; transition: background .12s, border-color .12s, transform .08s;
+  }
+  .set-check.done { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .set-check:active { transform: scale(.9); }
+  .set-head { display: grid; grid-template-columns: 26px 1fr 1fr; gap: 8px; margin-top: 4px; padding: 0 2px; }
+  .set-head.bw { grid-template-columns: 26px 1fr; }
   .set-head span { font-size: 11px; color: var(--muted); text-align: center; }
+  .ex-toggle { cursor: pointer; }
+  .ex-body { display: none; margin-top: 6px; }
+  .exercise.open .ex-body { display: block; }
+  .ex-chev { color: var(--muted); font-size: 22px; line-height: 1; display: inline-block; transition: transform .2s; }
+  .exercise.open .ex-chev { transform: rotate(90deg); }
+  .ord-btn { background: none; border: none; color: var(--muted); font-size: 17px; line-height: 1; padding: 4px 5px; cursor: pointer; border-radius: 6px; }
+  .ord-btn:active { background: var(--border); }
+  .group-head .ex-actions { align-items: center; }
+  .ex-foot { display: flex; gap: 8px; margin-top: 10px; }
+  .ex-foot button {
+    flex: 1; background: var(--bg); border: 0.5px solid var(--border); color: var(--muted);
+    border-radius: 8px; padding: 9px; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .ex-foot button:active { background: var(--border); }
+  .bw-badge { font-size: 10px; padding: 2px 8px; border-radius: 8px; background: rgba(95,208,168,.15); color: var(--accent); margin-left: 7px; vertical-align: 1px; font-weight: 600; }
+  .bw-toggle { margin-top: 8px; }
+  .bw-toggle button { background: var(--bg); border: 0.5px solid var(--border); color: var(--muted); border-radius: 8px; padding: 7px 12px; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .bw-toggle button.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .finish-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+    background: var(--bg); border-top: 0.5px solid var(--border);
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); max-width: 600px; margin: 0 auto;
+  }
+  .finish-bar button {
+    width: 100%; background: var(--accent); color: var(--accent-ink); border: none; border-radius: 12px;
+    padding: 14px; font-size: 16px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .finish-bar button:active { transform: scale(.99); opacity: .92; }
+  .finish-bar #finishTime { font-variant-numeric: tabular-nums; opacity: .85; font-size: 15px; }
+  .start-btn {
+    width: 100%; margin: 2px 0 4px; background: var(--accent); color: var(--accent-ink); border: none;
+    border-radius: 14px; padding: 16px; font-size: 17px; font-weight: 700; cursor: pointer;
+    letter-spacing: -.01em; transition: transform .1s, opacity .15s;
+  }
+  .start-btn:active { transform: scale(.99); opacity: .92; }
+  .start-hint { text-align: center; color: var(--muted); font-size: 13px; padding: 16px 8px 6px; }
+  .chips-mini { margin-bottom: 12px; }
+  .chips-mini .chip { padding: 7px 13px; font-size: 13px; }
+  .ex-prog { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 10px; background: var(--bg); color: var(--muted); letter-spacing: .02em; }
+  .ex-prog.full { background: var(--accent); color: var(--accent-ink); }
 
   .tabs {
     display: flex; gap: 4px; padding: 5px; margin: 12px 16px 0;
@@ -246,6 +297,18 @@
   .day-ex:first-of-type { border-top: none; }
   .day-ex .grp { color: var(--accent); font-size: 12px; }
   .day-ex .sets { color: var(--muted); font-size: 13px; }
+  /* Detalhe do treino do dia (Agenda) */
+  .wk-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 4px; }
+  .wk-mtag { background: rgba(93,202,165,.15); color: var(--accent); border-radius: 10px; padding: 3px 10px; font-size: 12px; font-weight: 600; }
+  .wk-stats { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .wk-group { margin-top: 12px; }
+  .wk-gname { font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 4px; letter-spacing: .01em; }
+  .wk-ex { padding: 8px 0; border-top: 0.5px solid var(--border); }
+  .wk-ex:first-of-type { border-top: none; }
+  .wk-exname { font-size: 14px; font-weight: 600; margin-bottom: 5px; }
+  .wk-sets { display: flex; flex-wrap: wrap; gap: 5px; }
+  .wk-set { background: var(--surface2); border: 0.5px solid var(--border); border-radius: 7px; padding: 3px 9px; font-size: 12px; color: var(--text); font-variant-numeric: tabular-nums; }
+  .wk-note { font-size: 12px; color: var(--muted); font-style: italic; margin-top: 5px; }
   /* Hábitos */
   .habit-row { display:flex; flex-wrap:wrap; align-items:center; gap:10px; background:var(--surface); border:0.5px solid var(--border); border-radius:10px; padding:11px 12px; margin-bottom:8px; }
   .habit-row.compact { background:var(--surface2); padding:9px 10px; margin:6px 0 0; }
@@ -381,6 +444,10 @@
 
 <div class="app-ver" id="appVer"></div>
 
+<div class="finish-bar" id="finishBar" style="display:none">
+  <button onclick="finishWorkout()"><span>Finalizar treino</span><span id="finishTime">00:00</span></button>
+</div>
+
 <input type="file" id="importFile" accept="application/json,.json" style="display:none" onchange="importData(this)" />
 <div class="toast" id="toast"></div>
 
@@ -396,7 +463,7 @@
 <script src="./supabase.min.js"></script>
 <script>
 const STORAGE_KEY = 'workout-data';
-const APP_VERSION = '1.9'; // suba junto com o cache do sw.js a cada mudança
+const APP_VERSION = '2.4'; // suba junto com o cache do sw.js a cada mudança
 // --- Sincronização opcional (Supabase). Cole as 2 chaves do seu projeto: ---
 const SUPABASE_URL  = 'https://wnvmghpioztfcbvzdris.supabase.co';
 const SUPABASE_ANON = 'sb_publishable_GdTmIBCd8CBRtcghTWs_Jw_YlfeAbLZ'; // publishable key (pode ficar visível)
@@ -426,6 +493,7 @@ function load() {
     if (raw) DATA = JSON.parse(raw);
   } catch (e) { /* primeira vez, sem dados */ }
   normalize();
+  if (DATA.session) startSessionTimer(); // retoma o cronômetro de um treino em andamento
   render();
 }
 function normalize() {
@@ -447,8 +515,14 @@ function normalize() {
         const l = e.logs[e.logs.length - 1];
         e.targetSets = l ? l.sets.length : 3; // séries padrão do plano
       }
+      if (typeof e.bodyweight !== 'boolean') e.bodyweight = false;
     });
   });
+  if (!Array.isArray(DATA.sessions)) DATA.sessions = []; // resumo de cada treino finalizado
+  // sessão em andamento só vale pro dia de hoje
+  if (DATA.session && (!DATA.session.start || dateKey(DATA.session.start) !== dateKey(new Date()))) DATA.session = null;
+  if (!DATA.draft || typeof DATA.draft !== 'object') DATA.draft = {};
+  if (!DATA.session) DATA.draft = {}; // sem treino em andamento, não há rascunho
   if (!Array.isArray(DATA.habits)) DATA.habits = [];
   DATA.habits.forEach(h => {
     // dias da semana em que o hábito vale (0=Dom … 6=Sáb); vazio/ausente = todo dia
@@ -555,7 +629,9 @@ function addExercise(gid, inp) {
   const name = inp.value.trim();
   if (!name) return;
   const g = DATA.groups.find(x => x.id === gid);
-  g.exercises.push({ id: uid(), name, logs: [], targetSets: 3 });
+  const id = uid();
+  g.exercises.push({ id, name, logs: [], targetSets: 3, bodyweight: false });
+  openEx[id] = true; // já abre o exercício novo pra preencher
   inp.value = '';
   save(); renderActive();
 }
@@ -565,6 +641,32 @@ function delExercise(gid, eid) {
   g.exercises = g.exercises.filter(e => e.id !== eid);
   save(); renderActive();
 }
+function renameExercise(eid) {
+  const e = findEx(eid); if (!e) return;
+  const name = prompt('Nome do exercício:', e.name);
+  if (name && name.trim()) { e.name = name.trim(); save(); renderActive(); }
+}
+function moveExercise(gid, eid, dir) {
+  const g = DATA.groups.find(x => x.id === gid); if (!g) return;
+  const i = g.exercises.findIndex(e => e.id === eid);
+  const j = i + dir;
+  if (i < 0 || j < 0 || j >= g.exercises.length) return;
+  const [it] = g.exercises.splice(i, 1);
+  g.exercises.splice(j, 0, it);
+  save(); render();
+}
+function moveGroup(gid, dir) {
+  const activeOrder = DATA.groups.filter(g => DATA.activeGroups.includes(g.id)).map(g => g.id);
+  const pos = activeOrder.indexOf(gid);
+  const np = pos + dir;
+  if (pos < 0 || np < 0 || np >= activeOrder.length) return;
+  const arr = DATA.groups;
+  const i = arr.findIndex(g => g.id === gid);
+  const j = arr.findIndex(g => g.id === activeOrder[np]);
+  [arr[i], arr[j]] = [arr[j], arr[i]];
+  save(); render();
+}
+function toggleEditTypes() { editTypes = !editTypes; render(); }
 function setTargetSets(eid, n) {
   const e = findEx(eid);
   e.targetSets = Math.max(1, Math.min(12, (e.targetSets || 3) + n));
@@ -576,39 +678,60 @@ function renderActive() {
   else if (TAB === 'agenda') renderAgenda();
   else render();
 }
-function lastLog(e) { return e.logs[e.logs.length - 1]; }
-function draftCount(e) {
-  if (e._draftSets) return e._draftSets;
-  if (typeof e.targetSets === 'number') return e.targetSets; // séries definidas no Plano
-  const l = lastLog(e);
-  return l ? l.sets.length : 3;
-}
-function setSeriesCount(eid, n) {
-  const e = findEx(eid);
-  e._draftSets = Math.max(1, Math.min(10, draftCount(e) + n));
-  render();
-}
 function findEx(eid) {
   for (const g of DATA.groups) {
     const e = g.exercises.find(x => x.id === eid);
     if (e) return e;
   }
 }
-function saveLog(gid, eid) {
-  const g = DATA.groups.find(x => x.id === gid);
-  const e = g.exercises.find(x => x.id === eid);
-  const count = draftCount(e);
+function todayKey() { return dateKey(new Date()); }
+// último registro de um dia anterior — base pras sugestões de peso/reps
+function prevLog(e) {
+  const tk = todayKey();
+  for (let i = e.logs.length - 1; i >= 0; i--) if (dateKey(e.logs[i].ts) !== tk) return e.logs[i];
+  return null;
+}
+// ---- Rascunho do treino em andamento: você só digita; vira registro no "Finalizar" ----
+let openEx = {};        // quais exercícios estão abertos (sanfona)
+let editTypes = false;  // mostra o editor de tipos/músculos durante o treino
+function ensureDraft() { if (!DATA.draft || typeof DATA.draft !== 'object') DATA.draft = {}; }
+function rowCount(e) { const d = DATA.draft[e.id]; return (d && d.sets.length) ? d.sets.length : (e.targetSets || 3); }
+function draftFilled(e) { const d = DATA.draft[e.id]; return d ? d.sets.filter(s => s.carga != null || s.reps != null).length : 0; }
+// lê o que está digitado nos campos do exercício e guarda no rascunho
+function captureDraft(e) {
+  ensureDraft();
+  const rows = rowCount(e);
   const sets = [];
-  for (let i = 0; i < count; i++) {
-    const w = parseFloat(document.getElementById(`w_${eid}_${i}`).value);
-    const r = parseInt(document.getElementById(`rp_${eid}_${i}`).value);
-    if (!isNaN(w)) sets.push({ carga: w, reps: isNaN(r)?null:r });
+  for (let i = 0; i < rows; i++) {
+    const rEl = document.getElementById('rp_' + e.id + '_' + i);
+    if (!rEl) return; // exercício não está na tela; mantém o rascunho atual
+    const r = parseInt(rEl.value);
+    let carga = null;
+    if (!e.bodyweight) { const wEl = document.getElementById('w_' + e.id + '_' + i); const w = wEl ? parseFloat(wEl.value) : NaN; carga = isNaN(w) ? null : w; }
+    sets.push({ carga, reps: isNaN(r) ? null : r });
   }
-  if (sets.length === 0) { toast('Informe ao menos uma carga'); return; }
-  const note = document.getElementById('n_'+eid).value.trim();
-  e.logs.push({ ts: Date.now(), sets, note });
-  delete e._draftSets;
-  save(); render(); toast('Registrado ✓');
+  const nEl = document.getElementById('n_' + e.id);
+  const note = nEl ? nEl.value.trim() : (DATA.draft[e.id] ? DATA.draft[e.id].note : '');
+  DATA.draft[e.id] = { sets, note };
+}
+function updateDraft(eid) { captureDraft(findEx(eid)); save(); }
+function addSetRow(eid) {
+  const e = findEx(eid);
+  captureDraft(e); ensureDraft();
+  if (!DATA.draft[e.id]) DATA.draft[e.id] = { sets: [], note: '' };
+  DATA.draft[e.id].sets.push({ carga: null, reps: null });
+  save(); render();
+}
+function toggleEx(eid) {
+  const e = findEx(eid);
+  if (e) captureDraft(e); // não perde o que já foi digitado ao recolher
+  openEx[eid] = !openEx[eid];
+  render();
+}
+function flushDrafts() { DATA.groups.forEach(g => g.exercises.forEach(e => captureDraft(e))); }
+function toggleBodyweight(eid) {
+  const e = findEx(eid); e.bodyweight = !e.bodyweight;
+  save(); renderPlano();
 }
 function delLog(gid, eid, ts) {
   const g = DATA.groups.find(x => x.id === gid);
@@ -630,6 +753,31 @@ function delTimeLog(gid, ts) {
   save(); render();
 }
 
+function startWorkout() {
+  const selected = DATA.groups.filter(g => DATA.activeGroups.includes(g.id));
+  if (!selected.length) { toast('Selecione um tipo de treino'); return; }
+  startSession();   // cria a sessão + cronômetro
+  render();         // mostra os exercícios
+}
+function addTypeSectionHTML() {
+  const have = new Set(DATA.groups.map(g => g.name.toLowerCase()));
+  const presetsLeft = PRESET_TYPES.filter(t => !have.has(t.name.toLowerCase()));
+  const presetChips = presetsLeft.length
+    ? `<div class="chips">${presetsLeft.map(t => `<button class="chip add" onclick="addPreset('${t.name}','${t.kind}')">+ ${esc(t.name)}</button>`).join('')}</div>`
+    : '';
+  return `
+    ${presetChips}
+    <div class="new-type">
+      <input id="newType" placeholder="Criar novo (ex: Boxe, Tênis)" onkeydown="if(event.key==='Enter')addCustomType()" />
+      <div class="row2">
+        <div class="seg">
+          <button class="${newTypeKind==='forca'?'on':''}" onclick="setTypeKind('forca')">Musculação</button>
+          <button class="${newTypeKind==='tempo'?'on':''}" onclick="setTypeKind('tempo')">Tempo</button>
+        </div>
+        <button class="add-habit-btn" onclick="addCustomType()">+</button>
+      </div>
+    </div>`;
+}
 function render() {
   document.getElementById('subtitle').textContent =
     DATA.groups.length + ' tipos · ' + DATA.activeGroups.length + ' no treino de hoje';
@@ -640,49 +788,58 @@ function render() {
     return `<button class="chip ${on?'on':''}" onclick="toggleActive('${g.id}')">${esc(g.name)}${on?' ✓':''}</button>`;
   }).join('');
   const selected = DATA.groups.filter(g => DATA.activeGroups.includes(g.id));
+
+  if (!DATA.session) {
+    // ---- Fase 1: montar o treino (só seleção + Iniciar) ----
+    const totalEx = selected.reduce((n, g) => n + (g.kind === 'tempo' ? 0 : g.exercises.length), 0);
+    const startBtn = selected.length
+      ? `<button class="start-btn" onclick="startWorkout()">▶ Iniciar treino${totalEx ? ` · ${totalEx} exercícios` : ''}</button>`
+      : `<div class="start-hint">Selecione ao menos um tipo acima para começar.</div>`;
+    wrap.innerHTML = `
+      <div class="muscle-pick">
+        <div class="pick-label">Treino de hoje — selecione os tipos</div>
+        <div class="chips">${chips || '<span class="sub" style="color:var(--muted);font-size:13px">nenhum tipo ainda</span>'}</div>
+      </div>
+      ${startBtn}
+      <div class="add-type">
+        <div class="pick-label">Adicionar tipo de treino</div>
+        ${addTypeSectionHTML()}
+      </div>`;
+    updateFinishBar();
+    return;
+  }
+
+  // ---- Fase 2: treino em andamento (cronômetro + exercícios) ----
   const cards = selected.length
     ? selected.map(g => groupCardHTML(g)).join('')
-    : '<div class="empty">Toque nos tipos acima para montar o treino de hoje.</div>';
-
-  const have = new Set(DATA.groups.map(g => g.name.toLowerCase()));
-  const presetsLeft = PRESET_TYPES.filter(t => !have.has(t.name.toLowerCase()));
-  const presetChips = presetsLeft.length
-    ? `<div class="chips">${presetsLeft.map(t => `<button class="chip add" onclick="addPreset('${t.name}','${t.kind}')">+ ${esc(t.name)}</button>`).join('')}</div>`
+    : '<div class="empty">Nenhum músculo no treino.<br>Toque em "+ músculo / tipo" abaixo.</div>';
+  const typeEditor = editTypes
+    ? `<div class="add-type" style="margin-top:0;border-top:none;padding-top:0">${addTypeSectionHTML()}</div>`
     : '';
-  const addSection = `
-    <div class="add-type">
-      <div class="pick-label">Adicionar tipo de treino</div>
-      ${presetChips}
-      <div class="new-type">
-        <input id="newType" placeholder="Criar novo (ex: Boxe, Tênis)" onkeydown="if(event.key==='Enter')addCustomType()" />
-        <div class="row2">
-          <div class="seg">
-            <button class="${newTypeKind==='forca'?'on':''}" onclick="setTypeKind('forca')">Musculação</button>
-            <button class="${newTypeKind==='tempo'?'on':''}" onclick="setTypeKind('tempo')">Tempo</button>
-          </div>
-          <button class="add-habit-btn" onclick="addCustomType()">+</button>
-        </div>
-      </div>
-    </div>`;
-
   wrap.innerHTML = `
-    <div class="muscle-pick">
-      <div class="pick-label">Treino de hoje — selecione os tipos</div>
-      <div class="chips">${chips || '<span class="sub" style="color:var(--muted);font-size:13px">nenhum tipo ainda</span>'}</div>
+    <div class="chips chips-mini">${chips}
+      <button class="chip add" onclick="toggleEditTypes()">${editTypes ? '✓ pronto' : '+ músculo / tipo'}</button>
     </div>
+    ${typeEditor}
     ${cards}
-    ${addSection}`;
+    <div style="height:84px"></div>`;
 
-  selected.forEach(g => g.kind !== 'tempo' && g.exercises.forEach(e => drawChart(e)));
+  selected.forEach(g => g.kind !== 'tempo' && g.exercises.forEach(e => { if (openEx[e.id]) drawChart(e); }));
+  updateFinishBar();
 }
 function groupCardHTML(g) {
   let body;
   if (g.kind === 'tempo') body = timeCardHTML(g);
   else if (g.exercises.length) body = g.exercises.map(e => exerciseHTML(g, e)).join('');
-  else body = '<div class="empty" style="padding:18px 8px">Nenhum exercício no plano.<br>Defina os exercícios na aba <b>Plano</b>.</div>';
+  else body = '<div class="empty" style="padding:14px 8px">Nenhum exercício ainda. Adicione abaixo 👇</div>';
   const sub = g.kind === 'tempo'
     ? `${g.logs.length} registros <span class="kind-badge">tempo</span>`
     : `${g.exercises.length} exercícios`;
+  const addEx = g.kind === 'tempo' ? '' : `
+    <div class="add-ex" style="margin-top:10px">
+      <input placeholder="+ adicionar exercício" onkeydown="if(event.key==='Enter')addExercise('${g.id}',this)" />
+      <button onclick="addExercise('${g.id}', this.previousElementSibling)">+</button>
+    </div>`;
   return `
     <div class="group-card open">
       <div class="group-head">
@@ -692,9 +849,13 @@ function groupCardHTML(g) {
             <div class="count">${sub}</div>
           </div>
         </div>
-        <button class="icon-btn" onclick="delGroup('${g.id}')">🗑</button>
+        <div class="ex-actions">
+          <button class="ord-btn" onclick="moveGroup('${g.id}',-1)" aria-label="subir músculo">↑</button>
+          <button class="ord-btn" onclick="moveGroup('${g.id}',1)" aria-label="descer músculo">↓</button>
+          <button class="icon-btn" onclick="delGroup('${g.id}')">🗑</button>
+        </div>
       </div>
-      <div class="group-body">${body}</div>
+      <div class="group-body">${body}${addEx}</div>
     </div>`;
 }
 function timeCardHTML(g) {
@@ -721,56 +882,74 @@ function timeCardHTML(g) {
 }
 
 function exerciseHTML(g, e) {
-  const last = e.logs[e.logs.length-1];
-  const lastTxt = last
-    ? `Última: ${last.sets.length} séries · ${maxLoad(last)}kg máx`
-    : 'Sem registros ainda';
-  const count = draftCount(e);
-  let setInputs = '<div class="set-head"><span>#</span><span>peso (kg)</span><span>reps</span></div>';
-  for (let i = 0; i < count; i++) {
-    const ls = last && last.sets[i];           // série correspondente da última vez
-    const wv = ls != null ? ls.carga : '';
-    const rv = ls != null && ls.reps != null ? ls.reps : '';
+  const bw = !!e.bodyweight;
+  const prev = prevLog(e);
+  let lastTxt;
+  if (!prev) lastTxt = 'Sem registros ainda';
+  else if (bw) lastTxt = `Última: ${prev.sets.length} séries · ${prev.sets.map(s => s.reps).filter(x => x != null).join('/') || '?'} reps`;
+  else lastTxt = `Última: ${prev.sets.length} séries · ${maxLoad(prev)}kg máx`;
+
+  const open = !!openEx[e.id];
+  const draft = (DATA.draft && DATA.draft[e.id]) || null;
+  const filled = draftFilled(e);
+  const headSummary = filled ? `${filled} série${filled > 1 ? 's' : ''} preenchida${filled > 1 ? 's' : ''}` : lastTxt;
+
+  const rows = rowCount(e);
+  let setInputs = bw
+    ? '<div class="set-head bw"><span>#</span><span>reps</span></div>'
+    : '<div class="set-head"><span>#</span><span>peso (kg)</span><span>reps</span></div>';
+  for (let i = 0; i < rows; i++) {
+    const ds = draft && draft.sets[i] ? draft.sets[i] : null;
+    const sug = prev && prev.sets[i] ? prev.sets[i] : null;
+    const wv = ds && ds.carga != null ? ds.carga : '';
+    const rv = ds && ds.reps != null ? ds.reps : '';
+    const wph = sug && sug.carga != null ? sug.carga : 'peso';
+    const rph = sug && sug.reps != null ? sug.reps : 'reps';
+    const wInput = `<input id="w_${e.id}_${i}" type="number" inputmode="decimal" placeholder="${wph}" value="${wv}" onchange="updateDraft('${e.id}')" />`;
+    const rInput = `<input id="rp_${e.id}_${i}" type="number" inputmode="numeric" placeholder="${rph}" value="${rv}" onchange="updateDraft('${e.id}')" />`;
     setInputs += `
-      <div class="set-line">
+      <div class="set-line ${bw ? 'bw' : ''}">
         <span class="set-idx">${i+1}</span>
-        <input id="w_${e.id}_${i}" type="number" inputmode="decimal" placeholder="peso" value="${wv}" />
-        <input id="rp_${e.id}_${i}" type="number" inputmode="numeric" placeholder="reps" value="${rv}" />
+        ${bw ? '' : wInput}
+        ${rInput}
       </div>`;
   }
-  const hist = e.logs.slice().reverse().slice(0,8).map(l => `
+  const note = draft && draft.note ? draft.note : '';
+  const histLogs = e.logs.filter(l => dateKey(l.ts) !== todayKey());
+  const hist = histLogs.slice().reverse().slice(0,8).map(l => `
     <div class="hist-item">
       <span class="date">${fmtDate(l.ts)}</span>
-      <span class="val">${l.sets.map(s => s.carga+(s.reps?'×'+s.reps:'')).join(' · ')}${l.note?' <span class="note">— '+esc(l.note)+'</span>':''}</span>
+      <span class="val">${l.sets.map(s => (s.carga != null ? s.carga : '') + (s.reps ? (s.carga != null ? '×' : '') + s.reps : '')).join(' · ')}${l.note?' <span class="note">— '+esc(l.note)+'</span>':''}</span>
       <button class="hist-del" onclick="delLog('${g.id}','${e.id}',${l.ts})">×</button>
     </div>`).join('');
   return `
-    <div class="exercise">
-      <div class="ex-head">
+    <div class="exercise ${open ? 'open' : ''}">
+      <div class="ex-head ex-toggle" onclick="toggleEx('${e.id}')">
         <div>
-          <div class="ex-name">${esc(e.name)}</div>
-          <div class="ex-last">${lastTxt}</div>
+          <div class="ex-name">${esc(e.name)}${bw ? '<span class="bw-badge">peso do corpo</span>' : ''}</div>
+          <div class="ex-last">${headSummary}</div>
         </div>
         <div class="ex-actions">
-          <button class="icon-btn" onclick="delExercise('${g.id}','${e.id}')">🗑</button>
+          ${filled ? `<span class="ex-prog full">${filled}</span>` : ''}
+          <button class="ord-btn" onclick="event.stopPropagation();moveExercise('${g.id}','${e.id}',-1)" aria-label="subir">↑</button>
+          <button class="ord-btn" onclick="event.stopPropagation();moveExercise('${g.id}','${e.id}',1)" aria-label="descer">↓</button>
+          <span class="ex-chev">›</span>
         </div>
       </div>
-      <div class="series-control">
-        <span>Séries:</span>
-        <div class="stepper">
-          <button onclick="setSeriesCount('${e.id}',-1)">−</button>
-          <div class="num">${count}</div>
-          <button onclick="setSeriesCount('${e.id}',1)">+</button>
+      <div class="ex-body">
+        ${setInputs}
+        <div class="ex-foot">
+          <button onclick="addSetRow('${e.id}')">+ série</button>
+          <button onclick="renameExercise('${e.id}')">✎ trocar nome</button>
+          <button onclick="delExercise('${g.id}','${e.id}')">🗑 excluir</button>
         </div>
+        <textarea id="n_${e.id}" class="note-input" rows="1" placeholder="Anotações (opcional)" onchange="updateDraft('${e.id}')">${esc(note)}</textarea>
+        ${!bw && histLogs.length >= 2 ? `<div class="chart-wrap"><div class="chart-label">Evolução da carga máxima (kg)</div><canvas id="chart_${e.id}"></canvas></div>` : ''}
+        ${hist ? `<div class="history">${hist}</div>` : ''}
       </div>
-      ${setInputs}
-      <textarea id="n_${e.id}" class="note-input" rows="1" placeholder="Anotações (opcional)"></textarea>
-      <button class="save-btn" style="width:100%;margin-top:8px" onclick="saveLog('${g.id}','${e.id}')">Salvar treino</button>
-      ${e.logs.length >= 2 ? `<div class="chart-wrap"><div class="chart-label">Evolução da carga máxima (kg)</div><canvas id="chart_${e.id}"></canvas></div>` : ''}
-      ${e.logs.length ? `<div class="history">${hist}</div>` : ''}
     </div>`;
 }
-function maxLoad(log) { return Math.max(...log.sets.map(s => s.carga)); }
+function maxLoad(log) { const cs = log.sets.map(s => s.carga).filter(x => typeof x === 'number'); return cs.length ? Math.max(...cs) : 0; }
 
 function drawChart(e) {
   if (e.logs.length < 2) return;
@@ -812,11 +991,11 @@ function setTab(t) {
   document.getElementById('plano').style.display = t==='plano' ? '' : 'none';
   document.getElementById('habits').style.display = t==='habitos' ? '' : 'none';
   document.getElementById('agenda').style.display = t==='agenda' ? '' : 'none';
-  document.getElementById('timerBar').style.display = t==='treino' ? 'flex' : 'none';
   if (t==='agenda') renderAgenda();
   else if (t==='habitos') renderHabits();
   else if (t==='plano') renderPlano();
   else render();
+  updateFinishBar();
 }
 
 // ---- Hábitos ----
@@ -987,6 +1166,9 @@ function planoCardHTML(g) {
           <button onclick="setTargetSets('${e.id}',1)">+</button>
         </div>
       </div>
+      <div class="bw-toggle">
+        <button class="${e.bodyweight?'on':''}" onclick="toggleBodyweight('${e.id}')">💪 Peso do corpo${e.bodyweight?' ✓':''}</button>
+      </div>
     </div>`).join('');
   return `
     <div class="group-card open">
@@ -1004,30 +1186,67 @@ function planoCardHTML(g) {
     </div>`;
 }
 
-// ---- Timers (Treino) ----
-let woStart = null, woInt = null;
+// ---- Sessão e timers (Treino) ----
+let woInt = null;
 let restEnd = null, restInt = null, audioCtx = null;
 function fmtClock(s) {
   s = Math.max(0, Math.round(s));
   return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
 }
-function toggleWorkout() {
+function startSession() {
+  if (DATA.session) return;
+  DATA.session = { start: Date.now() };
+  persistLocal();
+  startSessionTimer();
+  updateFinishBar();
+}
+function startSessionTimer() {
   const btn = document.getElementById('woBtn');
-  if (woStart === null) {
-    woStart = Date.now();
-    btn.textContent = 'Finalizar'; btn.classList.add('on');
-    woInt = setInterval(tickWorkout, 1000); tickWorkout();
-  } else {
-    const mins = Math.round((Date.now() - woStart) / 60000);
-    clearInterval(woInt); woInt = null; woStart = null;
-    btn.textContent = 'Iniciar'; btn.classList.remove('on');
-    document.getElementById('woDisplay').textContent = '00:00';
-    toast('Treino: ' + mins + ' min 💪');
-  }
+  if (btn) { btn.textContent = 'Treinando…'; btn.classList.add('on'); }
+  if (woInt) clearInterval(woInt);
+  woInt = setInterval(tickWorkout, 1000); tickWorkout();
+}
+function toggleWorkout() {
+  if (DATA.session) finishWorkout(); else startSession();
 }
 function tickWorkout() {
-  if (woStart === null) return;
-  document.getElementById('woDisplay').textContent = fmtClock((Date.now() - woStart) / 1000);
+  if (!DATA.session) return;
+  const txt = fmtClock((Date.now() - DATA.session.start) / 1000);
+  const d = document.getElementById('woDisplay'); if (d) d.textContent = txt;
+  const f = document.getElementById('finishTime'); if (f) f.textContent = txt;
+}
+function updateFinishBar() {
+  const active = (TAB === 'treino' && !!DATA.session);
+  const bar = document.getElementById('finishBar'); if (bar) bar.style.display = active ? 'block' : 'none';
+  const tb = document.getElementById('timerBar'); if (tb) tb.style.display = active ? 'flex' : 'none';
+}
+function finishWorkout() {
+  if (!DATA.session) return;
+  flushDrafts(); // captura tudo que está digitado nos campos
+  const mins = Math.max(1, Math.round((Date.now() - DATA.session.start) / 60000));
+  let totalSets = 0; const names = [];
+  DATA.groups.forEach(g => g.exercises.forEach(e => {
+    const d = DATA.draft && DATA.draft[e.id];
+    if (!d) return;
+    const sets = d.sets
+      .map(s => e.bodyweight ? { reps: s.reps } : { carga: s.carga, reps: s.reps })
+      .filter(s => s.carga != null || s.reps != null); // descarta séries em branco
+    if (sets.length) {
+      e.logs.push({ ts: DATA.session.start, sets, note: d.note || '' });
+      totalSets += sets.length;
+      if (!names.includes(g.name)) names.push(g.name);
+    }
+  }));
+  DATA.sessions.push({ ts: DATA.session.start, dur: mins, sets: totalSets, groups: names });
+  DATA.draft = {};
+  DATA.session = null;
+  openEx = {};
+  clearInterval(woInt); woInt = null;
+  const btn = document.getElementById('woBtn');
+  if (btn) { btn.textContent = 'Iniciar'; btn.classList.remove('on'); }
+  const dEl = document.getElementById('woDisplay'); if (dEl) dEl.textContent = '00:00';
+  save(); render();
+  toast(totalSets ? `Treino salvo: ${mins} min · ${totalSets} séries 💪` : `Treino encerrado: ${mins} min`);
 }
 function startRest(sec) {
   ensureAudio();
@@ -1155,22 +1374,29 @@ function renderDayDetail(wByDay) {
   const weekday = d.toLocaleDateString('pt-BR', { weekday: 'long' });
   const full = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
   const items = wByDay[selectedKey] || [];
+  const dayMins = (DATA.sessions || []).filter(s => dateKey(s.ts) === selectedKey).reduce((a, s) => a + (s.dur || 0), 0);
   const selWd = d.getDay();
   const dayHabits = DATA.habits.filter(h => scheduledOn(h, selWd));
   const habitRows = dayHabits.map(h => habitRow(h, selectedKey, true)).join('');
-  const workoutHtml = items.length
-    ? items.map(i => i.kind === 'tempo'
-        ? `<div class="day-ex">
-            <span class="grp">${esc(i.group)}</span><br>
-            <span class="sets">${i.minutos} min</span>
-            ${i.note?`<br><span class="sets" style="font-style:italic">${esc(i.note)}</span>`:''}
-          </div>`
-        : `<div class="day-ex">
-            <span class="grp">${esc(i.group)}</span> · ${esc(i.name)}<br>
-            <span class="sets">${i.sets.map(s => s.carga + (s.reps?'×'+s.reps:'') + ' kg').join('  ·  ')}</span>
-            ${i.note?`<br><span class="sets" style="font-style:italic">${esc(i.note)}</span>`:''}
-          </div>`).join('')
-    : '<div class="day-sub" style="padding:6px 0">Sem treino registrado.</div>';
+  // agrupa os exercícios do dia por músculo, pra mostrar bonitinho
+  const byGroup = {};
+  items.forEach(i => { (byGroup[i.group] = byGroup[i.group] || []).push(i); });
+  const muscleNames = Object.keys(byGroup);
+  const totalSets = items.reduce((n, i) => n + (i.kind === 'forca' ? i.sets.length : 0), 0);
+  const setLabel = s => s.carga != null ? `${s.carga}${s.reps ? '×' + s.reps : ''} kg` : `${s.reps != null ? s.reps : '?'} reps`;
+
+  const workoutHtml = items.length ? `
+      <div class="wk-tags">${muscleNames.map(n => `<span class="wk-mtag">${esc(n)}</span>`).join('')}</div>
+      ${(dayMins || totalSets) ? `<div class="wk-stats">${dayMins ? `⏱ ${dayMins} min` : ''}${dayMins && totalSets ? ' · ' : ''}${totalSets ? `${totalSets} séries` : ''}</div>` : ''}
+      ${muscleNames.map(n => `
+        <div class="wk-group">
+          <div class="wk-gname">${esc(n)}</div>
+          ${byGroup[n].map(i => i.kind === 'tempo'
+            ? `<div class="wk-ex"><div class="wk-exname">Duração</div><div class="wk-sets"><span class="wk-set">${i.minutos} min</span></div>${i.note ? `<div class="wk-note">${esc(i.note)}</div>` : ''}</div>`
+            : `<div class="wk-ex"><div class="wk-exname">${esc(i.name)}</div><div class="wk-sets">${i.sets.map(s => `<span class="wk-set">${setLabel(s)}</span>`).join('')}</div>${i.note ? `<div class="wk-note">${esc(i.note)}</div>` : ''}</div>`
+          ).join('')}
+        </div>`).join('')}
+    ` : '<div class="day-sub" style="padding:6px 0">Sem treino registrado.</div>';
   el.innerHTML = `
     <div class="day-card" style="margin-top:16px">
       <h3>${cap(weekday)} <span class="day-sub">· ${full}</span></h3>
