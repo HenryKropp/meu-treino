@@ -256,13 +256,13 @@
     background: var(--bg); border-top: 0.5px solid var(--border);
     padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); max-width: 600px; margin: 0 auto;
   }
-  .finish-bar button {
+  .finish-go {
     width: 100%; background: var(--accent); color: var(--accent-ink); border: none; border-radius: 12px;
     padding: 14px; font-size: 16px; font-weight: 700; cursor: pointer;
     display: flex; align-items: center; justify-content: center; gap: 10px;
   }
-  .finish-bar button:active { transform: scale(.99); opacity: .92; }
-  .finish-bar #finishTime { font-variant-numeric: tabular-nums; opacity: .85; font-size: 15px; }
+  .finish-go:active { transform: scale(.99); opacity: .92; }
+  .finish-go #finishTime { font-variant-numeric: tabular-nums; opacity: .85; font-size: 15px; }
   .start-btn {
     width: 100%; margin: 2px 0 4px; background: var(--accent); color: var(--accent-ink); border: none;
     border-radius: 14px; padding: 16px; font-size: 17px; font-weight: 700; cursor: pointer;
@@ -309,6 +309,26 @@
   .wk-sets { display: flex; flex-wrap: wrap; gap: 5px; }
   .wk-set { background: var(--surface2); border: 0.5px solid var(--border); border-radius: 7px; padding: 3px 9px; font-size: 12px; color: var(--text); font-variant-numeric: tabular-nums; }
   .wk-note { font-size: 12px; color: var(--muted); font-style: italic; margin-top: 5px; }
+  /* Agenda: toggle mês/semana, streaks e visão semanal */
+  .ag-toggle { display: flex; gap: 6px; background: var(--surface); border: 0.5px solid var(--border); border-radius: 11px; padding: 4px; margin-bottom: 14px; }
+  .ag-toggle button { flex: 1; background: transparent; border: none; color: var(--muted); padding: 9px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .ag-toggle button.on { background: var(--accent); color: var(--accent-ink); }
+  .streaks-box { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  .streak-chip { display: inline-flex; align-items: center; gap: 5px; background: var(--surface); border: 0.5px solid var(--border); border-radius: 10px; padding: 5px 10px; font-size: 12px; color: var(--text); }
+  .streak-chip b { color: #f0a35e; font-weight: 700; }
+  .wv-list { display: flex; flex-direction: column; gap: 8px; }
+  .wv-day { display: flex; gap: 12px; align-items: center; background: var(--surface); border: 0.5px solid var(--border); border-radius: 12px; padding: 10px 12px; cursor: pointer; }
+  .wv-day.sel { border-color: var(--accent); }
+  .wv-day.today .wv-date b { color: var(--accent); }
+  .wv-date { display: flex; flex-direction: column; align-items: center; min-width: 36px; flex-shrink: 0; }
+  .wv-date b { font-size: 18px; font-weight: 700; line-height: 1; }
+  .wv-date span { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .wv-body { flex: 1; min-width: 0; }
+  .wv-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+  .wv-rest { font-size: 12px; color: var(--muted); }
+  .wv-habline { margin-top: 6px; }
+  .wv-hab { font-size: 11px; color: var(--muted); background: var(--surface2); border-radius: 8px; padding: 2px 8px; }
+  .wv-hab.full { color: var(--accent); }
   /* Hábitos */
   .habit-row { display:flex; flex-wrap:wrap; align-items:center; gap:10px; background:var(--surface); border:0.5px solid var(--border); border-radius:10px; padding:11px 12px; margin-bottom:8px; }
   .habit-row.compact { background:var(--surface2); padding:9px 10px; margin:6px 0 0; }
@@ -342,9 +362,9 @@
   .cal-nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
   .cal-nav button { background:var(--surface); border:0.5px solid var(--border); color:var(--text); width:38px; height:38px; border-radius:9px; font-size:20px; cursor:pointer; }
   .cal-nav .month { font-size:15px; font-weight:600; }
-  .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:5px; }
+  .cal-grid { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:5px; }
   .cal-wd { text-align:center; font-size:11px; color:var(--muted); padding-bottom:2px; }
-  .cal-cell { aspect-ratio:1/1; border-radius:9px; background:var(--surface2); border:1px solid transparent; display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative; font-size:14px; }
+  .cal-cell { min-width:0; aspect-ratio:1/1; border-radius:9px; background:var(--surface2); border:1px solid transparent; display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative; font-size:14px; }
   .cal-cell.empty { background:transparent; cursor:default; }
   .cal-cell.today { border-color:var(--muted); }
   .cal-cell.selected { border-color:var(--accent); background:var(--accent-dark); color:#fff; font-weight:700; }
@@ -364,18 +384,42 @@
   .save-btn, .add-habit-btn, .fab-bar button { transition: transform .1s, opacity .15s; }
   .fab-bar button:active, .add-habit-btn:active { transform: scale(.97); }
 
-  /* Timers (Treino) */
-  .timer-bar { display: flex; gap: 10px; padding: 12px 16px 0; max-width: 600px; margin: 0 auto; }
-  .tmr { flex: 1; background: var(--surface); border: 0.5px solid var(--border); border-radius: 12px; padding: 10px 12px; min-width: 0; }
-  .tmr-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
-  .tmr-time { font-size: 27px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.02em; margin: 1px 0 8px; }
-  .tmr-time.done { color: var(--accent); animation: tflash .45s ease-in-out 4; }
+  /* Cronômetro + descanso (topo, sempre visível no treino) */
+  .timer-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 16px 0; max-width: 600px; margin: 0 auto; }
+  .wo-clock { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--muted); background: var(--surface); border: 0.5px solid var(--border); border-radius: 10px; padding: 8px 11px; flex-shrink: 0; }
+  .wo-clock b { color: var(--text); font-size: 17px; font-variant-numeric: tabular-nums; font-weight: 700; letter-spacing: -.01em; }
+  .wo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: blink 1.6s ease-in-out infinite; }
+  @keyframes blink { 50% { opacity: .25; } }
   @keyframes tflash { 50% { opacity: .2; } }
-  .tmr-btn { width: 100%; background: var(--accent); color: var(--accent-ink); border: none; border-radius: 8px; padding: 9px; font-weight: 700; font-size: 14px; cursor: pointer; }
-  .tmr-btn.on { background: var(--danger); color: #fff; }
-  .rest-presets { display: flex; gap: 5px; }
-  .rest-presets button { flex: 1; background: var(--bg); border: 0.5px solid var(--border); color: var(--text); border-radius: 7px; padding: 8px 0; font-size: 13px; font-weight: 600; cursor: pointer; min-width: 0; }
+  .rest-box { display: flex; align-items: center; gap: 7px; flex: 1 1 210px; background: var(--surface); border: 0.5px solid var(--border); border-radius: 10px; padding: 6px 8px; }
+  .rest-lbl { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+  .rest-time { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; min-width: 44px; text-align: center; flex-shrink: 0; }
+  .rest-time.done { color: var(--accent); animation: tflash .45s ease-in-out 4; }
+  .rest-presets { display: flex; gap: 4px; flex: 1; min-width: 0; }
+  .rest-presets button { flex: 1; background: var(--bg); border: 0.5px solid var(--border); color: var(--text); border-radius: 7px; padding: 7px 0; font-size: 12px; font-weight: 600; cursor: pointer; min-width: 0; }
   .rest-presets button:active { background: var(--border); }
+  /* Modo foco (um exercício por vez) */
+  .focus-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .focus-prog { flex: 1; min-width: 0; }
+  .focus-meta { font-size: 13px; color: var(--muted); margin-bottom: 5px; }
+  .focus-bar { height: 6px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+  .focus-bar span { display: block; height: 100%; background: var(--accent); border-radius: 4px; transition: width .25s; }
+  .ov-toggle { background: var(--surface2); border: 0.5px solid var(--border); color: var(--text); border-radius: 9px; padding: 9px 13px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+  .focus-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 16px; }
+  .focus-ex-head { margin-bottom: 12px; }
+  .focus-ex-name { font-size: 20px; font-weight: 700; letter-spacing: -.01em; }
+  .focus-nav { display: flex; gap: 10px; margin-top: 14px; }
+  .focus-nav button { flex: 1; background: var(--surface); border: 0.5px solid var(--border); color: var(--text); border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 700; cursor: pointer; }
+  .focus-nav button:disabled { opacity: .35; }
+  .focus-nav button:active:not(:disabled) { background: var(--surface2); }
+  .focus-nav .nav-next { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  /* Visão geral */
+  .ov-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 10px; }
+  .ov-ex { display: flex; align-items: center; gap: 6px; padding: 10px 0; border-top: 0.5px solid var(--border); }
+  .ov-ex:first-of-type { border-top: none; }
+  .ov-exmain { flex: 1; min-width: 0; cursor: pointer; }
+  .ov-exname { font-size: 15px; font-weight: 600; display: block; }
+  .ov-exsub { font-size: 12px; color: var(--muted); }
 
   .toast {
     position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
@@ -420,14 +464,10 @@
 </div>
 
 <div class="timer-bar" id="timerBar">
-  <div class="tmr">
-    <div class="tmr-label">Cronômetro</div>
-    <div class="tmr-time" id="woDisplay">00:00</div>
-    <button class="tmr-btn" id="woBtn" onclick="toggleWorkout()">Iniciar</button>
-  </div>
-  <div class="tmr">
-    <div class="tmr-label">Descanso</div>
-    <div class="tmr-time" id="restDisplay">00:00</div>
+  <div class="wo-clock"><span class="wo-dot"></span> <b id="woDisplay">00:00</b></div>
+  <div class="rest-box">
+    <span class="rest-lbl">Descanso</span>
+    <span class="rest-time" id="restDisplay">00:00</span>
     <div class="rest-presets">
       <button onclick="startRest(60)">1:00</button>
       <button onclick="startRest(90)">1:30</button>
@@ -445,7 +485,7 @@
 <div class="app-ver" id="appVer"></div>
 
 <div class="finish-bar" id="finishBar" style="display:none">
-  <button onclick="finishWorkout()"><span>Finalizar treino</span><span id="finishTime">00:00</span></button>
+  <button class="finish-go" onclick="finishWorkout()"><span>Finalizar treino</span><span id="finishTime">00:00</span></button>
 </div>
 
 <input type="file" id="importFile" accept="application/json,.json" style="display:none" onchange="importData(this)" />
@@ -463,7 +503,7 @@
 <script src="./supabase.min.js"></script>
 <script>
 const STORAGE_KEY = 'workout-data';
-const APP_VERSION = '2.4'; // suba junto com o cache do sw.js a cada mudança
+const APP_VERSION = '2.8'; // suba junto com o cache do sw.js a cada mudança
 // --- Sincronização opcional (Supabase). Cole as 2 chaves do seu projeto: ---
 const SUPABASE_URL  = 'https://wnvmghpioztfcbvzdris.supabase.co';
 const SUPABASE_ANON = 'sb_publishable_GdTmIBCd8CBRtcghTWs_Jw_YlfeAbLZ'; // publishable key (pode ficar visível)
@@ -482,6 +522,7 @@ const PRESET_TYPES = [
 let DATA = { groups: [], habits: [], habitChecks: {} };
 const charts = {};
 let agendaY = null, agendaM = null, selectedKey = null; // estado do calendário
+let agendaView = 'mes'; // 'mes' | 'semana'
 let newHabitType = 'do';
 let newHabitDays = [0,1,2,3,4,5,6]; // dias selecionados ao criar um hábito novo
 const DAY_NAMES = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
@@ -631,8 +672,12 @@ function addExercise(gid, inp) {
   const g = DATA.groups.find(x => x.id === gid);
   const id = uid();
   g.exercises.push({ id, name, logs: [], targetSets: 3, bodyweight: false });
-  openEx[id] = true; // já abre o exercício novo pra preencher
   inp.value = '';
+  // durante o treino, já pula pro exercício novo (modo foco)
+  if (DATA.session) {
+    const i = buildSteps().findIndex(s => s.kind === 'ex' && s.e.id === id);
+    if (i >= 0) { curStep = i; overview = false; }
+  }
   save(); renderActive();
 }
 function delExercise(gid, eid) {
@@ -692,8 +737,42 @@ function prevLog(e) {
   return null;
 }
 // ---- Rascunho do treino em andamento: você só digita; vira registro no "Finalizar" ----
-let openEx = {};        // quais exercícios estão abertos (sanfona)
+let openEx = {};        // (legado) quais exercícios estão abertos
 let editTypes = false;  // mostra o editor de tipos/músculos durante o treino
+let curStep = 0;        // exercício atual no modo foco
+let overview = false;   // true = lista de gerenciamento; false = modo foco
+// monta a sequência do treino: cada exercício de força é um passo; cada grupo de tempo é um passo
+function buildSteps() {
+  const steps = [];
+  DATA.groups.filter(g => DATA.activeGroups.includes(g.id)).forEach(g => {
+    if (g.kind === 'tempo') steps.push({ kind: 'tempo', g });
+    else g.exercises.forEach(e => steps.push({ kind: 'ex', g, e }));
+  });
+  return steps;
+}
+function captureCurrentStep() { // salva o que está digitado antes de trocar de tela
+  const s = buildSteps()[curStep];
+  if (s && s.kind === 'ex') captureDraft(s.e);
+}
+function goStep(dir) {
+  captureCurrentStep();
+  const n = buildSteps().length;
+  curStep = Math.max(0, Math.min(n - 1, curStep + dir));
+  overview = false; save(); render();
+  ensureMediaSession();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function setOverview(b) { captureCurrentStep(); overview = b; save(); render(); }
+function focusExercise(eid) {
+  captureCurrentStep();
+  const i = buildSteps().findIndex(s => s.kind === 'ex' && s.e.id === eid);
+  if (i >= 0) { curStep = i; overview = false; render(); }
+}
+function focusGroup(gid) {
+  captureCurrentStep();
+  const i = buildSteps().findIndex(s => s.g.id === gid);
+  if (i >= 0) { curStep = i; overview = false; render(); }
+}
 function ensureDraft() { if (!DATA.draft || typeof DATA.draft !== 'object') DATA.draft = {}; }
 function rowCount(e) { const d = DATA.draft[e.id]; return (d && d.sets.length) ? d.sets.length : (e.targetSets || 3); }
 function draftFilled(e) { const d = DATA.draft[e.id]; return d ? d.sets.filter(s => s.carga != null || s.reps != null).length : 0; }
@@ -714,7 +793,7 @@ function captureDraft(e) {
   const note = nEl ? nEl.value.trim() : (DATA.draft[e.id] ? DATA.draft[e.id].note : '');
   DATA.draft[e.id] = { sets, note };
 }
-function updateDraft(eid) { captureDraft(findEx(eid)); save(); }
+function updateDraft(eid) { captureDraft(findEx(eid)); save(); ensureMediaSession(); }
 function addSetRow(eid) {
   const e = findEx(eid);
   captureDraft(e); ensureDraft();
@@ -756,8 +835,10 @@ function delTimeLog(gid, ts) {
 function startWorkout() {
   const selected = DATA.groups.filter(g => DATA.activeGroups.includes(g.id));
   if (!selected.length) { toast('Selecione um tipo de treino'); return; }
-  startSession();   // cria a sessão + cronômetro
-  render();         // mostra os exercícios
+  curStep = 0; overview = false;
+  startSession();        // cria a sessão + cronômetro
+  startMediaSession();   // controles na tela de bloqueio (gesto do toque)
+  render();              // mostra o 1º exercício (modo foco)
 }
 function addTypeSectionHTML() {
   const have = new Set(DATA.groups.map(g => g.name.toLowerCase()));
@@ -809,54 +890,56 @@ function render() {
     return;
   }
 
-  // ---- Fase 2: treino em andamento (cronômetro + exercícios) ----
-  const cards = selected.length
-    ? selected.map(g => groupCardHTML(g)).join('')
-    : '<div class="empty">Nenhum músculo no treino.<br>Toque em "+ músculo / tipo" abaixo.</div>';
-  const typeEditor = editTypes
-    ? `<div class="add-type" style="margin-top:0;border-top:none;padding-top:0">${addTypeSectionHTML()}</div>`
-    : '';
-  wrap.innerHTML = `
-    <div class="chips chips-mini">${chips}
-      <button class="chip add" onclick="toggleEditTypes()">${editTypes ? '✓ pronto' : '+ músculo / tipo'}</button>
-    </div>
-    ${typeEditor}
-    ${cards}
-    <div style="height:84px"></div>`;
+  // ---- Fase 2: treino em andamento ----
+  const steps = buildSteps();
 
-  selected.forEach(g => g.kind !== 'tempo' && g.exercises.forEach(e => { if (openEx[e.id]) drawChart(e); }));
-  updateFinishBar();
-}
-function groupCardHTML(g) {
-  let body;
-  if (g.kind === 'tempo') body = timeCardHTML(g);
-  else if (g.exercises.length) body = g.exercises.map(e => exerciseHTML(g, e)).join('');
-  else body = '<div class="empty" style="padding:14px 8px">Nenhum exercício ainda. Adicione abaixo 👇</div>';
-  const sub = g.kind === 'tempo'
-    ? `${g.logs.length} registros <span class="kind-badge">tempo</span>`
-    : `${g.exercises.length} exercícios`;
-  const addEx = g.kind === 'tempo' ? '' : `
-    <div class="add-ex" style="margin-top:10px">
-      <input placeholder="+ adicionar exercício" onkeydown="if(event.key==='Enter')addExercise('${g.id}',this)" />
-      <button onclick="addExercise('${g.id}', this.previousElementSibling)">+</button>
-    </div>`;
-  return `
-    <div class="group-card open">
-      <div class="group-head">
-        <div class="left">
-          <div>
-            <h2>${esc(g.name)}</h2>
-            <div class="count">${sub}</div>
-          </div>
-        </div>
-        <div class="ex-actions">
-          <button class="ord-btn" onclick="moveGroup('${g.id}',-1)" aria-label="subir músculo">↑</button>
-          <button class="ord-btn" onclick="moveGroup('${g.id}',1)" aria-label="descer músculo">↓</button>
-          <button class="icon-btn" onclick="delGroup('${g.id}')">🗑</button>
-        </div>
+  if (overview || steps.length === 0) {
+    // ---- Visão geral: gerenciar músculos, exercícios e ordem ----
+    const typeEditor = editTypes
+      ? `<div class="add-type" style="margin-top:0;border-top:none;padding-top:0">${addTypeSectionHTML()}</div>`
+      : '';
+    const cards = selected.length
+      ? selected.map(g => groupOverviewHTML(g)).join('')
+      : '<div class="empty">Nenhum músculo no treino.<br>Toque em "+ músculo / tipo".</div>';
+    wrap.innerHTML = `
+      <div class="ov-head">
+        <div class="pick-label" style="margin:0">Visão geral do treino</div>
+        ${steps.length ? `<button class="ov-toggle" onclick="setOverview(false)">▶ treinar</button>` : ''}
       </div>
-      <div class="group-body">${body}${addEx}</div>
-    </div>`;
+      <div class="chips chips-mini">${chips}
+        <button class="chip add" onclick="toggleEditTypes()">${editTypes ? '✓ pronto' : '+ músculo / tipo'}</button>
+      </div>
+      ${typeEditor}
+      ${cards}
+      <div style="height:140px"></div>`;
+    updateFinishBar();
+    return;
+  }
+
+  // ---- Modo foco: um exercício por vez ----
+  if (curStep < 0) curStep = 0;
+  if (curStep >= steps.length) curStep = steps.length - 1;
+  const step = steps[curStep];
+  const pct = Math.round(((curStep + 1) / steps.length) * 100);
+  const body = step.kind === 'tempo' ? timeCardHTML(step.g) : exerciseFocusHTML(step.g, step.e);
+  wrap.innerHTML = `
+    <div class="focus-head">
+      <button class="ov-toggle" onclick="setOverview(true)">≡ todos</button>
+      <div class="focus-prog">
+        <div class="focus-meta">${esc(step.g.name)} · Exercício ${curStep + 1} de ${steps.length}</div>
+        <div class="focus-bar"><span style="width:${pct}%"></span></div>
+      </div>
+    </div>
+    ${body}
+    <div class="focus-nav">
+      <button onclick="goStep(-1)" ${curStep === 0 ? 'disabled' : ''}>‹ Anterior</button>
+      <button class="nav-next" onclick="goStep(1)" ${curStep === steps.length - 1 ? 'disabled' : ''}>Próximo ›</button>
+    </div>
+    <div style="height:150px"></div>`;
+
+  if (step.kind === 'ex') drawChart(step.e);
+  updateMediaSession();
+  updateFinishBar();
 }
 function timeCardHTML(g) {
   const last = g.logs[g.logs.length - 1];
@@ -881,21 +964,18 @@ function timeCardHTML(g) {
     </div>`;
 }
 
-function exerciseHTML(g, e) {
+function exLastTxt(e) {
+  const prev = prevLog(e);
+  if (!prev) return 'Sem registros ainda';
+  if (e.bodyweight) return `Última: ${prev.sets.length} séries · ${prev.sets.map(s => s.reps).filter(x => x != null).join('/') || '?'} reps`;
+  return `Última: ${prev.sets.length} séries · ${maxLoad(prev)}kg máx`;
+}
+function exSetRowsHTML(e) {
   const bw = !!e.bodyweight;
   const prev = prevLog(e);
-  let lastTxt;
-  if (!prev) lastTxt = 'Sem registros ainda';
-  else if (bw) lastTxt = `Última: ${prev.sets.length} séries · ${prev.sets.map(s => s.reps).filter(x => x != null).join('/') || '?'} reps`;
-  else lastTxt = `Última: ${prev.sets.length} séries · ${maxLoad(prev)}kg máx`;
-
-  const open = !!openEx[e.id];
   const draft = (DATA.draft && DATA.draft[e.id]) || null;
-  const filled = draftFilled(e);
-  const headSummary = filled ? `${filled} série${filled > 1 ? 's' : ''} preenchida${filled > 1 ? 's' : ''}` : lastTxt;
-
   const rows = rowCount(e);
-  let setInputs = bw
+  let html = bw
     ? '<div class="set-head bw"><span>#</span><span>reps</span></div>'
     : '<div class="set-head"><span>#</span><span>peso (kg)</span><span>reps</span></div>';
   for (let i = 0; i < rows; i++) {
@@ -907,46 +987,81 @@ function exerciseHTML(g, e) {
     const rph = sug && sug.reps != null ? sug.reps : 'reps';
     const wInput = `<input id="w_${e.id}_${i}" type="number" inputmode="decimal" placeholder="${wph}" value="${wv}" onchange="updateDraft('${e.id}')" />`;
     const rInput = `<input id="rp_${e.id}_${i}" type="number" inputmode="numeric" placeholder="${rph}" value="${rv}" onchange="updateDraft('${e.id}')" />`;
-    setInputs += `
-      <div class="set-line ${bw ? 'bw' : ''}">
-        <span class="set-idx">${i+1}</span>
-        ${bw ? '' : wInput}
-        ${rInput}
-      </div>`;
+    html += `<div class="set-line ${bw ? 'bw' : ''}"><span class="set-idx">${i+1}</span>${bw ? '' : wInput}${rInput}</div>`;
   }
-  const note = draft && draft.note ? draft.note : '';
+  return html;
+}
+function exHistoryHTML(g, e) {
   const histLogs = e.logs.filter(l => dateKey(l.ts) !== todayKey());
-  const hist = histLogs.slice().reverse().slice(0,8).map(l => `
+  if (!histLogs.length) return '';
+  const hist = histLogs.slice().reverse().slice(0, 8).map(l => `
     <div class="hist-item">
       <span class="date">${fmtDate(l.ts)}</span>
-      <span class="val">${l.sets.map(s => (s.carga != null ? s.carga : '') + (s.reps ? (s.carga != null ? '×' : '') + s.reps : '')).join(' · ')}${l.note?' <span class="note">— '+esc(l.note)+'</span>':''}</span>
+      <span class="val">${l.sets.map(s => (s.carga != null ? s.carga : '') + (s.reps ? (s.carga != null ? '×' : '') + s.reps : '')).join(' · ')}${l.note ? ' <span class="note">— ' + esc(l.note) + '</span>' : ''}</span>
       <button class="hist-del" onclick="delLog('${g.id}','${e.id}',${l.ts})">×</button>
     </div>`).join('');
+  return `<div class="history">${hist}</div>`;
+}
+// Card focado: o exercício atual, grande e sempre aberto
+function exerciseFocusHTML(g, e) {
+  const bw = !!e.bodyweight;
+  const note = (DATA.draft && DATA.draft[e.id] && DATA.draft[e.id].note) || '';
+  const histLogs = e.logs.filter(l => dateKey(l.ts) !== todayKey());
   return `
-    <div class="exercise ${open ? 'open' : ''}">
-      <div class="ex-head ex-toggle" onclick="toggleEx('${e.id}')">
-        <div>
-          <div class="ex-name">${esc(e.name)}${bw ? '<span class="bw-badge">peso do corpo</span>' : ''}</div>
-          <div class="ex-last">${headSummary}</div>
-        </div>
+    <div class="focus-card">
+      <div class="focus-ex-head">
+        <div class="focus-ex-name">${esc(e.name)}${bw ? '<span class="bw-badge">peso do corpo</span>' : ''}</div>
+        <div class="ex-last">${exLastTxt(e)}</div>
+      </div>
+      ${exSetRowsHTML(e)}
+      <div class="ex-foot">
+        <button onclick="addSetRow('${e.id}')">+ série</button>
+        <button onclick="renameExercise('${e.id}')">✎ trocar nome</button>
+        <button onclick="delExercise('${g.id}','${e.id}')">🗑 excluir</button>
+      </div>
+      <textarea id="n_${e.id}" class="note-input" rows="1" placeholder="Anotações (opcional)" onchange="updateDraft('${e.id}')">${esc(note)}</textarea>
+      ${!bw && histLogs.length >= 2 ? `<div class="chart-wrap"><div class="chart-label">Evolução da carga máxima (kg)</div><canvas id="chart_${e.id}"></canvas></div>` : ''}
+      ${exHistoryHTML(g, e)}
+    </div>`;
+}
+// Linha compacta na visão geral (toca pra focar)
+function exOverviewHTML(g, e) {
+  const filled = draftFilled(e);
+  const sub = filled ? `${filled} série${filled > 1 ? 's' : ''} preenchida${filled > 1 ? 's' : ''}` : exLastTxt(e);
+  return `
+    <div class="ov-ex">
+      <div class="ov-exmain" onclick="focusExercise('${e.id}')">
+        <span class="ov-exname">${esc(e.name)}${e.bodyweight ? ' <span class="bw-badge">peso do corpo</span>' : ''}</span>
+        <span class="ov-exsub">${sub}</span>
+      </div>
+      ${filled ? `<span class="ex-prog full">${filled}</span>` : ''}
+      <button class="ord-btn" onclick="moveExercise('${g.id}','${e.id}',-1)" aria-label="subir">↑</button>
+      <button class="ord-btn" onclick="moveExercise('${g.id}','${e.id}',1)" aria-label="descer">↓</button>
+    </div>`;
+}
+function groupOverviewHTML(g) {
+  const addEx = g.kind === 'tempo' ? '' : `
+    <div class="add-ex" style="margin-top:8px">
+      <input placeholder="+ adicionar exercício" onkeydown="if(event.key==='Enter')addExercise('${g.id}',this)" />
+      <button onclick="addExercise('${g.id}', this.previousElementSibling)">+</button>
+    </div>`;
+  const rows = g.kind === 'tempo'
+    ? `<div class="ov-ex"><div class="ov-exmain" onclick="focusGroup('${g.id}')"><span class="ov-exname">Duração (tempo)</span><span class="ov-exsub">${g.logs.length} registros</span></div></div>`
+    : (g.exercises.length ? g.exercises.map(e => exOverviewHTML(g, e)).join('') : '<div class="ov-exsub" style="padding:8px 0">Nenhum exercício ainda.</div>');
+  return `
+    <div class="group-card open">
+      <div class="group-head">
+        <div class="left"><div>
+          <h2>${esc(g.name)}</h2>
+          <div class="count">${g.kind === 'tempo' ? 'tempo' : g.exercises.length + ' exercícios'}</div>
+        </div></div>
         <div class="ex-actions">
-          ${filled ? `<span class="ex-prog full">${filled}</span>` : ''}
-          <button class="ord-btn" onclick="event.stopPropagation();moveExercise('${g.id}','${e.id}',-1)" aria-label="subir">↑</button>
-          <button class="ord-btn" onclick="event.stopPropagation();moveExercise('${g.id}','${e.id}',1)" aria-label="descer">↓</button>
-          <span class="ex-chev">›</span>
+          <button class="ord-btn" onclick="moveGroup('${g.id}',-1)" aria-label="subir músculo">↑</button>
+          <button class="ord-btn" onclick="moveGroup('${g.id}',1)" aria-label="descer músculo">↓</button>
+          <button class="icon-btn" onclick="delGroup('${g.id}')">🗑</button>
         </div>
       </div>
-      <div class="ex-body">
-        ${setInputs}
-        <div class="ex-foot">
-          <button onclick="addSetRow('${e.id}')">+ série</button>
-          <button onclick="renameExercise('${e.id}')">✎ trocar nome</button>
-          <button onclick="delExercise('${g.id}','${e.id}')">🗑 excluir</button>
-        </div>
-        <textarea id="n_${e.id}" class="note-input" rows="1" placeholder="Anotações (opcional)" onchange="updateDraft('${e.id}')">${esc(note)}</textarea>
-        ${!bw && histLogs.length >= 2 ? `<div class="chart-wrap"><div class="chart-label">Evolução da carga máxima (kg)</div><canvas id="chart_${e.id}"></canvas></div>` : ''}
-        ${hist ? `<div class="history">${hist}</div>` : ''}
-      </div>
+      <div class="group-body">${rows}${addEx}</div>
     </div>`;
 }
 function maxLoad(log) { const cs = log.sets.map(s => s.carga).filter(x => typeof x === 'number'); return cs.length ? Math.max(...cs) : 0; }
@@ -1214,6 +1329,7 @@ function tickWorkout() {
   const txt = fmtClock((Date.now() - DATA.session.start) / 1000);
   const d = document.getElementById('woDisplay'); if (d) d.textContent = txt;
   const f = document.getElementById('finishTime'); if (f) f.textContent = txt;
+  if (!restEnd) updateMediaPosition();
 }
 function updateFinishBar() {
   const active = (TAB === 'treino' && !!DATA.session);
@@ -1240,7 +1356,8 @@ function finishWorkout() {
   DATA.sessions.push({ ts: DATA.session.start, dur: mins, sets: totalSets, groups: names });
   DATA.draft = {};
   DATA.session = null;
-  openEx = {};
+  openEx = {}; curStep = 0; overview = false;
+  stopMediaSession();
   clearInterval(woInt); woInt = null;
   const btn = document.getElementById('woBtn');
   if (btn) { btn.textContent = 'Iniciar'; btn.classList.remove('on'); }
@@ -1250,9 +1367,11 @@ function finishWorkout() {
 }
 function startRest(sec) {
   ensureAudio();
+  restTotalSec = sec;
   restEnd = Date.now() + sec * 1000;
   if (restInt) clearInterval(restInt);
   document.getElementById('restDisplay').classList.remove('done');
+  ensureMediaSession();
   restInt = setInterval(tickRest, 200); tickRest();
 }
 function stopRest() {
@@ -1269,9 +1388,11 @@ function tickRest() {
     clearInterval(restInt); restInt = null; restEnd = null;
     d.textContent = '00:00'; d.classList.add('done');
     beep();
+    updateMediaPosition();
     setTimeout(() => d.classList.remove('done'), 2200);
   } else {
     d.textContent = fmtClock(remain);
+    updateMediaPosition();
   }
 }
 function ensureAudio() {
@@ -1297,6 +1418,77 @@ function beep() {
   if (navigator.vibrate) navigator.vibrate([180, 70, 180]);
 }
 
+// ---- Controles na tela de bloqueio (Media Session) ----
+// Toca um áudio silencioso pra "segurar" a sessão de mídia; aí o iOS mostra
+// o exercício atual + timer + botões de avançar/voltar na tela bloqueada.
+let mediaAudio = null, restTotalSec = 90;
+function silentWavUrl(seconds) {
+  const sr = 8000, n = sr * seconds, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+  const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+  w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVE'); w(12, 'fmt ');
+  v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true);
+  v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+  return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
+}
+function startMediaSession() {
+  if (!('mediaSession' in navigator)) return;
+  try {
+    if (!mediaAudio) { mediaAudio = new Audio(silentWavUrl(1)); mediaAudio.loop = true; mediaAudio.volume = 0; }
+    const p = mediaAudio.play(); if (p && p.catch) p.catch(() => {});
+    const set = (a, fn) => { try { navigator.mediaSession.setActionHandler(a, fn); } catch (e) {} };
+    set('nexttrack', () => goStep(1));
+    set('previoustrack', () => goStep(-1));
+    set('play', () => { if (mediaAudio) mediaAudio.play().catch(() => {}); navigator.mediaSession.playbackState = 'playing'; });
+    set('pause', () => { if (mediaAudio) mediaAudio.play().catch(() => {}); }); // não deixa "pausar" (mantém os controles na tela)
+    updateMediaSession();
+  } catch (e) {}
+}
+function ensureMediaSession() {
+  if (!DATA.session) return;
+  if (mediaAudio && !mediaAudio.paused) { updateMediaSession(); return; }
+  startMediaSession();
+}
+function stopMediaSession() {
+  try { if (mediaAudio) mediaAudio.pause(); } catch (e) {}
+  if ('mediaSession' in navigator) {
+    try {
+      ['nexttrack', 'previoustrack', 'play', 'pause'].forEach(a => navigator.mediaSession.setActionHandler(a, null));
+      navigator.mediaSession.metadata = null;
+      navigator.mediaSession.playbackState = 'none';
+    } catch (e) {}
+  }
+}
+function updateMediaSession() {
+  if (!('mediaSession' in navigator) || !DATA.session) return;
+  const steps = buildSteps(), s = steps[curStep];
+  let title = 'Treino', artist = 'Meu Treino';
+  if (s) {
+    title = s.kind === 'ex' ? s.e.name : (s.g.name + ' (tempo)');
+    artist = `${s.g.name} · Exercício ${curStep + 1} de ${steps.length}`;
+  }
+  try {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title, artist, album: 'Meu Treino',
+      artwork: [{ src: './icon-192.png', sizes: '192x192', type: 'image/png' }, { src: './icon-512.png', sizes: '512x512', type: 'image/png' }]
+    });
+    navigator.mediaSession.playbackState = 'playing';
+  } catch (e) {}
+  updateMediaPosition();
+}
+function updateMediaPosition() {
+  if (!('mediaSession' in navigator) || !DATA.session || !navigator.mediaSession.setPositionState) return;
+  try {
+    if (restEnd) { // mostra a contagem do descanso na barrinha da tela de bloqueio
+      const remain = Math.max(0, (restEnd - Date.now()) / 1000);
+      navigator.mediaSession.setPositionState({ duration: restTotalSec, position: Math.min(restTotalSec, restTotalSec - remain), playbackRate: 1 });
+    } else { // senão, o tempo total de treino
+      const el = Math.max(1, (Date.now() - DATA.session.start) / 1000);
+      navigator.mediaSession.setPositionState({ duration: el + 1, position: el, playbackRate: 1 });
+    }
+  } catch (e) {}
+}
+
 // ---- Calendário ----
 function shiftMonth(n) {
   agendaM += n;
@@ -1305,6 +1497,48 @@ function shiftMonth(n) {
   renderAgenda();
 }
 function selectDay(key) { selectedKey = key; renderAgenda(); }
+function setAgendaView(v) { agendaView = v; renderAgenda(); }
+function shiftWeek(n) {
+  const d = parseKey(selectedKey); d.setDate(d.getDate() + 7 * n);
+  selectedKey = dateKey(d); renderAgenda();
+}
+function streaksHTML() {
+  if (!DATA.habits.length) return '';
+  const chips = DATA.habits.map(h => {
+    const st = habitStreak(h.id);
+    return `<span class="streak-chip">${esc(h.name)} <b>${st > 0 ? '🔥' + st : '·'}</b></span>`;
+  }).join('');
+  return `<div class="detail-label" style="margin-top:0">Sequências de hábitos</div><div class="streaks-box">${chips}</div>`;
+}
+function weekViewHTML(wByDay, todayKey) {
+  const sel = parseKey(selectedKey);
+  const start = new Date(sel); start.setDate(sel.getDate() - sel.getDay()); // domingo
+  const end = new Date(start); end.setDate(start.getDate() + 6);
+  const range = `${start.getDate()}/${start.getMonth() + 1} – ${end.getDate()}/${end.getMonth() + 1}`;
+  const wdNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  let days = '';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(start); d.setDate(start.getDate() + i);
+    const key = dateKey(d);
+    const items = wByDay[key] || [];
+    const muscles = [...new Set(items.map(it => it.group))];
+    const wd = d.getDay();
+    const dayHabits = DATA.habits.filter(h => scheduledOn(h, wd));
+    const checks = DATA.habitChecks[key] || {};
+    const done = dayHabits.filter(h => checks[h.id]).length;
+    const tags = muscles.length
+      ? muscles.map(m => `<span class="wk-mtag">${esc(m)}</span>`).join('')
+      : '<span class="wv-rest">descanso</span>';
+    const hab = dayHabits.length
+      ? `<span class="wv-hab ${done === dayHabits.length ? 'full' : ''}">${done}/${dayHabits.length} hábitos</span>`
+      : '';
+    days += `<div class="wv-day ${key === selectedKey ? 'sel' : ''} ${key === todayKey ? 'today' : ''}" onclick="selectDay('${key}')">
+      <div class="wv-date"><b>${d.getDate()}</b><span>${wdNames[wd]}</span></div>
+      <div class="wv-body"><div class="wv-tags">${tags}</div>${hab ? `<div class="wv-habline">${hab}</div>` : ''}</div>
+    </div>`;
+  }
+  return `<div class="cal-nav"><button onclick="shiftWeek(-1)">‹</button><span class="month">${range}</span><button onclick="shiftWeek(1)">›</button></div><div class="wv-list">${days}</div>`;
+}
 
 function workoutsByDay() {
   const map = {};
@@ -1330,12 +1564,25 @@ function renderAgenda() {
   if (selectedKey === null) selectedKey = dateKey(now);
 
   const wByDay = workoutsByDay();
+  const todayKey = dateKey(now);
+  const totalHabits = DATA.habits.length;
+
+  const toggle = `<div class="ag-toggle">
+    <button class="${agendaView === 'mes' ? 'on' : ''}" onclick="setAgendaView('mes')">Mês</button>
+    <button class="${agendaView === 'semana' ? 'on' : ''}" onclick="setAgendaView('semana')">Semana</button>
+  </div>`;
+
+  if (agendaView === 'semana') {
+    wrap.innerHTML = toggle + streaksHTML() + weekViewHTML(wByDay, todayKey) + '<div id="dayDetail"></div>';
+    renderDayDetail(wByDay);
+    return;
+  }
+
+  // ---- Visão de mês ----
   const first = new Date(agendaY, agendaM, 1);
   const startWd = first.getDay();
   const daysInMonth = new Date(agendaY, agendaM + 1, 0).getDate();
   const monthLabel = first.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-  const todayKey = dateKey(now);
-  const totalHabits = DATA.habits.length;
 
   let cells = '';
   for (let i = 0; i < startWd; i++) cells += '<div class="cal-cell empty"></div>';
@@ -1354,7 +1601,7 @@ function renderAgenda() {
   }
   const wd = ['D','S','T','Q','Q','S','S'].map(x => `<div class="cal-wd">${x}</div>`).join('');
 
-  wrap.innerHTML = `
+  wrap.innerHTML = toggle + streaksHTML() + `
     <div class="cal-nav">
       <button onclick="shiftMonth(-1)">‹</button>
       <span class="month">${cap(monthLabel)}</span>
